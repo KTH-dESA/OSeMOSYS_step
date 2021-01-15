@@ -33,11 +33,11 @@ def read_dp(dp_path):
         dic[datafiles[2][j]] = pd.read_csv(dp_path+'/data/'+datafiles[2][j])
     return dic
 #%% Create new csv files from original csvs
-def new_dp(dic,years,step_nr):
+def new_dp(dic,years,step_nr,path):
     #dic = dp_dic #for development
     #years = step_years # for development
     #step_nr = 1 # for development
-    path = '../data/datapackage'+str(step_nr)
+    #path = '../data/datapackage'+str(step_nr) #for development
     try:
         os.mkdir(path)
     except OSError:
@@ -61,8 +61,8 @@ for i in range(all_steps):
         start = step * i
         end = start+(step*2)
         step_years = m_period.iloc[start:end]
-        new_dp(dp_dic,step_years,i)
+        new_dp(dp_dic,step_years,i,path)
     else:
         start = i * step
         step_years = m_period.iloc[start:]
-        new_dp(dp_dic,step_years,i)
+        new_dp(dp_dic,step_years,i,path)
