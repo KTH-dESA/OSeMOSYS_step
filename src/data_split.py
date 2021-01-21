@@ -2,6 +2,7 @@
 #%% Needed packages
 import sys
 import os
+from shutil import copyfile
 import subprocess as sp
 import pandas as pd
 import math
@@ -38,6 +39,12 @@ def new_dp(dp_dic,years,step_nr,path):
         os.mkdir(path)
     except OSError:
         print("Creation of the directory %s failed" % path)
+    copyfile('../data/datapackage/datapackage.json',path+'/datapackage.json')
+    path = path + '/data'
+    try:
+        os.mkdir(path)
+    except OSError:
+        print("Creation of the directory %s failed" % path)
 
     i = 0
     for i in dp_dic:
@@ -45,10 +52,10 @@ def new_dp(dp_dic,years,step_nr,path):
             df = dp_dic[i]
             m = df.YEAR.isin(years.VALUE)
             df = df[m]
-            df.to_csv(path+'/'+i)
+            df.to_csv(path+'/'+i,index=False)
         else:
             df = dp_dic[i]
-            df.to_csv(path+'/'+i)
+            df.to_csv(path+'/'+i,index=False)
 #%% Function to run the script
 def split_dp(directory,step_size):
 
