@@ -6,6 +6,7 @@ from shutil import copyfile
 import subprocess as sp
 import pandas as pd
 import math
+import time
 from otoole import ReadDatafile
 from otoole import WriteDatapackage
 from otoole import Context
@@ -53,9 +54,16 @@ def new_dp(dp_dic,years,step_nr,path):
             m = df.YEAR.isin(years.VALUE)
             df = df[m]
             df.to_csv(path+'/'+i,index=False)
+        elif i=='YEAR.csv':
+            df = dp_dic[i]
+            m = df.VALUE.isin(years.VALUE)
+            df = df[m]
+            df.to_csv(path+'/'+i,index=False)
         else:
             df = dp_dic[i]
             df.to_csv(path+'/'+i,index=False)
+    while not os.path.exists(path+'/YearSplit.csv'):
+        time.sleep(5)
 #%% Function to run the script
 def split_dp(directory,step_size):
 
