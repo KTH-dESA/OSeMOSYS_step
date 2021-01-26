@@ -1,6 +1,7 @@
 # script to write step results to final results
 #%% Import of needed packages
 import os
+import shutil
 import pandas as pd
 #%% Read results of step and filter to years in step
 def read_step_res(path,yr_in_step):  
@@ -10,7 +11,7 @@ def read_step_res(path,yr_in_step):
     result_files = next(os.walk(path))
     dic_res_step = dict()
     for i in range(len(result_files[2])):
-        if result_files[2][i] != 'SelectedResults.csv':
+        if result_files[2][i] != 'SelectedResults.csv' and result_files[2][i] != 'TotalTechnologyModelPeriodActivity':
             dic_res_step[result_files[2][i]] = pd.read_csv(path+'/'+result_files[2][i])
             if 'YEAR' in dic_res_step[result_files[2][i]].columns:
                 df = dic_res_step[result_files[2][i]]
@@ -26,13 +27,28 @@ def read_res_final(path):
             print("Directory is empty")
     else:
         print("Given directory doesn't exist")
+    final_res_files = next(os.walk(path))
+    dic_res_final = dict()
+    for i in range(len(final_res_files[2])):
+        dic_res_final[final_res_files[2][i]] = pd.read_csv(path+final_res_files[2][i])
     return dic_res_final
 #%% Append step results to final results
 def step_to_final(res_step,res_final):
 
     return 
 #%% Write final results to directory
-def write_res(res_final):
+def write_res(path,res_final):
+    for filename in os.listdir(path):
+        file_path = os.path.join(path, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' (file_path,e))
+    for i in range(len(res_final)):
+
     return
 #%% Main function to coordinate the script
 def main(path_step,path_final,step,yr_in_step):
