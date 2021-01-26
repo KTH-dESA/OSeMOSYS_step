@@ -19,12 +19,19 @@ def dp_to_df(dp_path,step):
     converter.convert(dp_path,df_path)
     return df_path
 #%% Run model
-def run_df():
+def run_df(path,step):
+    results_path = '../steps/step'+str(step)
+    try:
+        os.mkdir(results_path)
+    except OSError:
+        print("Creation of the directory %s failed" %results_path)
+    cd_run = 'glpsol -m ../model/osemosys.txt -d ../data/step%s.txt' % str(step)
+    sp.run([cd_run],shell=True)
     return results_path
 #%% If run as script
 if __name__ == '__main__':
     data_split.split_dp(path_data,step_length)
     df_step0 = dp_to_df('../data/datapackage0',0)
     # Run step 0
-    sp.run(['glpsol -m ../model/osemosys.txt -d ../data/step0.txt'],shell=True)
+    results0 = run_df(df_step0,0)
 # %%
