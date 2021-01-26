@@ -83,17 +83,21 @@ def split_dp(directory,step_size):
     all_steps = math.ceil(n_steps)
     # Read in datapackage
     dp_dic = read_dp(dp_path)
+    dic_yr_step = dict()
     i = 0
     for i in range(all_steps):
         if i+1 < full_steps:
             start = step_size * i
             end = start+(step_size*2)
             step_years = m_period.iloc[start:end]
+            dic_yr_step[i] = step_years
             new_dp(dp_dic,step_years,i,dp_path)
         else:
             start = i * step_size
             step_years = m_period.iloc[start:]
+            dic_yr_step[i] = step_years
             new_dp(dp_dic,step_years,i,dp_path)
+    return dic_yr_step
 #%% data_split executed as script
 if __name__ == '__main__':
     #%% Inputs
@@ -101,5 +105,5 @@ if __name__ == '__main__':
     step = 5 # for developing
     #path = sys.argv[1]
     #step = sys.argv[2]
-    split_dp(path,step)
+    dic_yr_step = split_dp(path,step)
 # %%
