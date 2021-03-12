@@ -106,4 +106,3 @@ if __name__ == '__main__':
     #path = sys.argv[1]
     #step = sys.argv[2]
     dic_yr_step = split_dp(path,step)
-# %%
