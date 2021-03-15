@@ -100,7 +100,7 @@ def split_dp(directory,step_size):
             step_years = m_period.iloc[start:]
             dic_yr_step[i] = step_years
             new_dp(dp_dic,step_years,i,dp_path)
-    return dic_yr_step
+    return dic_yr_step, full_steps
 #%% data_split executed as script
 if __name__ == '__main__':
     #%% Inputs
