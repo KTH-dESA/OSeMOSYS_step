@@ -6,6 +6,7 @@ from otoole import ReadDatapackage
 from otoole import WriteDatafile
 from otoole import Context
 import data_split
+import step_to_final as stf
 #%% Input
 path_data = '../data/utopia.txt'
 step_length = 5
@@ -30,8 +31,15 @@ def run_df(path,step):
     return results_path
 #%% If run as script
 if __name__ == '__main__':
-    data_split.split_dp(path_data,step_length)
+    dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
     df_step0 = dp_to_df('../data/datapackage0',0)
     # Run step 0
     results0 = run_df(df_step0,0)
+    stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length])
+    for s in range(full_steps): # iterate over steps from 1 till n
+        step = s+1
+        #put results from previous step into data of next step
+        # run model
+        # add results of step to final results
+
 # %%
