@@ -64,6 +64,9 @@ def new_dp(dp_dic,years,step_nr,path):
             df.to_csv(path+'/'+i,index=False)
     while not os.path.exists(path+'/YearSplit.csv'):
         time.sleep(5)
+    #Write csv for param ResultsPath, might need adjustment depending on implementation of ResultsPath in otoole
+#    rp_csv = pd.Series(['VALUE','../steps/step'+str(step_nr)])
+#    rp_csv.to_csv(path+'/ResultsPath.csv',index=False,header=False)
 #%% Function to run the script
 def split_dp(directory,step_size):
 
