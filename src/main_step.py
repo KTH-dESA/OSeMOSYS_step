@@ -7,6 +7,7 @@ from otoole import WriteDatafile
 from otoole import Context
 import data_split
 import step_to_final as stf
+import results_to_next_step as rtns
 #%% Input
 path_data = '../data/utopia.txt'
 step_length = 5
@@ -26,6 +27,12 @@ def run_df(path,step):
         os.mkdir(results_path)
     except OSError:
         print("Creation of the directory %s failed" %results_path)
+    with open('../model/osemosys.txt', 'r') as file:
+        model = file.readlines()
+    rp = "param ResultsPath, symbolic default '../steps/step"+str(step)+"';\n"
+    model[55] = rp
+    with open('../model/osemosys.txt', 'w') as file:
+        file.writelines(model)
     cd_run = 'glpsol -m ../model/osemosys.txt -d ../data/step%s.txt' % str(step)
     sp.run([cd_run],shell=True)
     return results_path
@@ -36,10 +43,13 @@ if __name__ == '__main__':
     # Run step 0
     results0 = run_df(df_step0,0)
     stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length])
-    for s in range(full_steps): # iterate over steps from 1 till n
+    for s in range(full_steps):
         step = s+1
-        #put results from previous step into data of next step
-        # run model
-        # add results of step to final results
-
+        dp_path = '../data/datapackage'+str(step)
+        dp_d_path = '../data/datapackage'+str(step)+'/data'
+        fr_path = '../results'
+        rtns.main(dp_path,fr_path)
+        df_path = dp_to_df(dp_path,step)
+        sr_path = run_df(df_path,step)
+        stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length])
 # %%
