@@ -100,12 +100,12 @@ def split_dp(directory,step_size):
             step_years = m_period.iloc[start:]
             dic_yr_step[i] = step_years
             new_dp(dp_dic,step_years,i,dp_path)
-    return dic_yr_step, full_steps
+    return dic_yr_step,full_steps
 #%% data_split executed as script
 if __name__ == '__main__':
     #%% Inputs
-    path = '../data/utopia.txt' #for developing
-    step = 5 # for developing
-    #path = sys.argv[1]
-    #step = sys.argv[2]
+    #path = '../data/utopia.txt' #for developing
+    #step = 5 # for developing
+    path = sys.argv[1]
+    step = sys.argv[2]
     dic_yr_step = split_dp(path,step)
