@@ -4,8 +4,8 @@ import pandas as pd
 import sys
 #%% Main function to coordinate the script
 def main(dp_path,fr_path):
-    dp_path = '../data/datapackage1/data' #for testing
-    fr_path = '../results' #for testing
+    #dp_path = '../data/datapackage1/data' #for testing
+    #fr_path = '../results' #for testing
     rc_path = dp_path +'/ResidualCapacity.csv'
     ol_path = dp_path +'/OperationalLife.csv'
     nc_path = fr_path +'/NewCapacity.csv'
@@ -18,7 +18,7 @@ def main(dp_path,fr_path):
     tec = pd.Series(df_init['TECHNOLOGY'].unique())
     tec = tec.append(pd.Series(df_nc['TECHNOLOGY'][~df_nc.TECHNOLOGY.isin(tec)].unique()),ignore_index=True)
     tec = tec[tec.isin(df_ol['TECHNOLOGY'])]
-    for r in df_nc['REGION']:
+    for r in df_nc['REGION'].unique():
         for t in tec:
             for y in df_yr['VALUE']:
                 df = df_nc
