@@ -40,7 +40,7 @@ def step_to_final(res_step,res_final):
     #res_final = dic_res_final #for testing
     dic_final = res_final
     for df in dic_final:
-        dic_final[df].append(res_step[df],ignore_index=True)
+        dic_final[df] = dic_final[df].append(res_step[df],ignore_index=True)
     return dic_final
 #%% Write final results to directory
 def write_res(path,res_final):
