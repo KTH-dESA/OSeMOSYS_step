@@ -2,6 +2,7 @@
 #%% Importe required packages
 import os
 import subprocess as sp
+import time
 from otoole import ReadDatapackage
 from otoole import WriteDatafile
 from otoole import Context
@@ -34,7 +35,7 @@ def run_df(path,step):
     with open('../model/osemosys.txt', 'w') as file:
         file.writelines(model)
     cd_run = 'glpsol -m ../model/osemosys.txt -d ../data/step%s.txt' % str(step)
-    sp.run([cd_run],shell=True)
+    sp.run([cd_run],shell=True,capture_output=True)
     return results_path
 #%% If run as script
 if __name__ == '__main__':
@@ -43,13 +44,18 @@ if __name__ == '__main__':
     # Run step 0
     results0 = run_df(df_step0,0)
     stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length])
+    print('Step 0: done')
     for s in range(full_steps):
         step = s+1
         dp_path = '../data/datapackage'+str(step)
         dp_d_path = '../data/datapackage'+str(step)+'/data'
         fr_path = '../results'
-        rtns.main(dp_path,fr_path)
+        rtns.main(dp_d_path,fr_path)
+        #print('Step %s: ResCap in datapackage'%step)
         df_path = dp_to_df(dp_path,step)
+        #print('Step %s: datafile created'%step)
         sr_path = run_df(df_path,step)
+        #print('Step %s: model run completed'%step)
         stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length])
+        print('Step %s: done'%step)
 # %%
