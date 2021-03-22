@@ -1,5 +1,6 @@
 # main script to run the step function of OSeMOSYS
 #%% Importe required packages
+import sys
 import os
 import subprocess as sp
 import time
@@ -9,9 +10,6 @@ from otoole import Context
 import data_split
 import step_to_final as stf
 import results_to_next_step as rtns
-#%% Input
-path_data = '../data/utopia.txt'
-step_length = 5
 #%% Convert datapackage to datafile
 def dp_to_df(dp_path,step):
     # otoole datapackage to datafile
@@ -37,8 +35,8 @@ def run_df(path,step):
     cd_run = 'glpsol -m ../model/osemosys.txt -d ../data/step%s.txt' % str(step)
     sp.run([cd_run],shell=True,capture_output=True)
     return results_path
-#%% If run as script
-if __name__ == '__main__':
+#%% Main function to coordinate the execution of the script
+def main(path_data,step_length):
     dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
     df_step0 = dp_to_df('../data/datapackage0',0)
     # Run step 0
@@ -58,4 +56,10 @@ if __name__ == '__main__':
         #print('Step %s: model run completed'%step)
         stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length])
         print('Step %s: done'%step)
+#%% If run as script
+if __name__ == '__main__':
+    #path_data = '../data/utopia.txt'
+    #step_length = 5
+    path_data = sys.argv[1]
+    step_length = sys.argv[2]
 # %%
