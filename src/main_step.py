@@ -33,33 +33,55 @@ def run_df(path,step):
     with open('../model/osemosys.txt', 'w') as file:
         file.writelines(model)
     cd_run = 'glpsol -m ../model/osemosys.txt -d ../data/step%s.txt' % str(step)
-    sp.run([cd_run],shell=True,capture_output=True)
+    sp.run([cd_run],shell=True,capture_output=True,check=True)
     return results_path
 #%% Main function to coordinate the execution of the script
 def main(path_data,step_length):
-    dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
-    df_step0 = dp_to_df('../data/datapackage0',0)
-    # Run step 0
-    results0 = run_df(df_step0,0)
-    stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length])
-    print('Step 0: done')
-    for s in range(full_steps):
-        step = s+1
-        dp_path = '../data/datapackage'+str(step)
-        dp_d_path = '../data/datapackage'+str(step)+'/data'
-        fr_path = '../results'
-        rtns.main(dp_d_path,fr_path)
-        #print('Step %s: ResCap in datapackage'%step)
-        df_path = dp_to_df(dp_path,step)
-        #print('Step %s: datafile created'%step)
-        sr_path = run_df(df_path,step)
-        #print('Step %s: model run completed'%step)
-        stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length])
-        print('Step %s: done'%step)
+    if type(step_length)==int:
+        dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
+        df_step0 = dp_to_df('../data/datapackage0',0)
+        # Run step 0
+        results0 = run_df(df_step0,0)
+        stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length])
+        print('Step 0: done')
+        for s in range(full_steps):
+            step = s+1
+            dp_path = '../data/datapackage'+str(step)
+            dp_d_path = '../data/datapackage'+str(step)+'/data'
+            fr_path = '../results'
+            rtns.main(dp_d_path,fr_path)
+            #print('Step %s: ResCap in datapackage'%step)
+            df_path = dp_to_df(dp_path,step)
+            #print('Step %s: datafile created'%step)
+            sr_path = run_df(df_path,step)
+            #print('Step %s: model run completed'%step)
+            stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length])
+            print('Step %s: done'%step)
+    else:
+        dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
+        df_step0 = dp_to_df('../data/datapackage0',0)
+        # Run step 0
+        results0 = run_df(df_step0,0)
+        stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length[0]])
+        print('Step 0: done')
+        for s in range(full_steps):
+            step = s+1
+            dp_path = '../data/datapackage'+str(step)
+            dp_d_path = '../data/datapackage'+str(step)+'/data'
+            fr_path = '../results'
+            rtns.main(dp_d_path,fr_path)
+            #print('Step %s: ResCap in datapackage'%step)
+            df_path = dp_to_df(dp_path,step)
+            #print('Step %s: datafile created'%step)
+            sr_path = run_df(df_path,step)
+            #print('Step %s: model run completed'%step)
+            stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length[1]])
+            print('Step %s: done'%step)
 #%% If run as script
 if __name__ == '__main__':
-    #path_data = '../data/utopia.txt'
-    #step_length = 5
-    path_data = sys.argv[1]
-    step_length = sys.argv[2]
+    path_data = '../data/utopia.txt'
+    step_length = [6,10]
+    #path_data = sys.argv[1]
+    #step_length = sys.argv[2]
+    main(path_data,step_length)
 # %%

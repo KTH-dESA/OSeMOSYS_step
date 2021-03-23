@@ -69,7 +69,6 @@ def new_dp(dp_dic,years,step_nr,path):
 #    rp_csv.to_csv(path+'/ResultsPath.csv',index=False,header=False)
 #%% Function to run the script
 def split_dp(directory,step_size):
-
     #%% Check if provided directory is correct and contains data
     if os.path.exists(directory) and os.path.isdir(directory):
         if not os.listdir(directory):
@@ -81,31 +80,54 @@ def split_dp(directory,step_size):
     # Derive information on modelling period
     m_period = pd.read_csv(dp_path+'/data/YEAR.CSV')
     n_years = len(m_period.index)
-    n_steps = n_years/step_size
+    if type(step_size)==int:
+        n_steps = n_years/step_size
+    else:
+        n_steps = 1+(n_years-step_size[0])/step_size[1]
     full_steps = math.floor(n_steps)
     all_steps = math.ceil(n_steps)
     # Read in datapackage
     dp_dic = read_dp(dp_path)
     dic_yr_step = dict()
     i = 0
-    for i in range(all_steps):
-        if i+1 < full_steps:
-            start = step_size * i
-            end = start+(step_size*2)
-            step_years = m_period.iloc[start:end]
-            dic_yr_step[i] = step_years
-            new_dp(dp_dic,step_years,i,dp_path)
-        else:
-            start = i * step_size
-            step_years = m_period.iloc[start:]
-            dic_yr_step[i] = step_years
-            new_dp(dp_dic,step_years,i,dp_path)
+    if type(step_size)==int:
+        for i in range(all_steps):
+            if i+1 < full_steps:
+                start = step_size * i
+                end = start+(step_size*2)
+                step_years = m_period.iloc[start:end]
+                dic_yr_step[i] = step_years
+                new_dp(dp_dic,step_years,i,dp_path)
+            else:
+                start = i * step_size
+                step_years = m_period.iloc[start:]
+                dic_yr_step[i] = step_years
+                new_dp(dp_dic,step_years,i,dp_path)
+    else:
+        for i in range(all_steps):
+            if i==0:
+                start = 0
+                end = step_size[0]*2
+                step_years = m_period.iloc[start:end]
+                dic_yr_step[i] = step_years
+                new_dp(dp_dic,step_years,i,dp_path)
+            elif i+1 < full_steps:
+                start = step_size[0] + step_size[1] * (i-1)
+                end = start+(step_size[1]*2)
+                step_years = m_period.iloc[start:end]
+                dic_yr_step[i] = step_years
+                new_dp(dp_dic,step_years,i,dp_path)
+            else:
+                start = step_size[0] + (i-1) * step_size[1]
+                step_years = m_period.iloc[start:]
+                dic_yr_step[i] = step_years
+                new_dp(dp_dic,step_years,i,dp_path)
     return dic_yr_step,full_steps
 #%% data_split executed as script
 if __name__ == '__main__':
     #%% Inputs
     #path = '../data/utopia.txt' #for developing
-    #step = 5 # for developing
+    #step = [6,10] # for developing
     path = sys.argv[1]
     step = sys.argv[2]
     dic_yr_step = split_dp(path,step)
