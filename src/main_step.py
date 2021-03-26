@@ -20,8 +20,7 @@ def dp_to_df(dp_path,step):
     converter.convert(dp_path,df_path)
     return df_path
 #%% Run model
-def run_df(path,step):
-    results_path = '../steps/step'+str(step)
+def run_df(path,results_path,step):
     try:
         os.mkdir(results_path)
     except OSError:
@@ -40,8 +39,9 @@ def main(path_data,step_length):
     if type(step_length)==int:
         dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
         df_step0 = dp_to_df('../data/datapackage0',0)
+        res_path = '../steps/step'+str(0)
         # Run step 0
-        results0 = run_df(df_step0,0)
+        run_df(df_step0,res_path,0)
         stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length])
         print('Step 0: done')
         for s in range(full_steps):
@@ -53,7 +53,8 @@ def main(path_data,step_length):
             #print('Step %s: ResCap in datapackage'%step)
             df_path = dp_to_df(dp_path,step)
             #print('Step %s: datafile created'%step)
-            sr_path = run_df(df_path,step)
+            res_path = '../steps/step'+str(step)
+            run_df(df_path,res_path,step)
             #print('Step %s: model run completed'%step)
             stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length])
             print('Step %s: done'%step)
@@ -61,7 +62,8 @@ def main(path_data,step_length):
         dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
         df_step0 = dp_to_df('../data/datapackage0',0)
         # Run step 0
-        results0 = run_df(df_step0,0)
+        res_path = '../steps/step'+str(0)
+        run_df(df_step0,res_path,0)
         stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length[0]])
         print('Step 0: done')
         for s in range(full_steps):
@@ -73,7 +75,8 @@ def main(path_data,step_length):
             #print('Step %s: ResCap in datapackage'%step)
             df_path = dp_to_df(dp_path,step)
             #print('Step %s: datafile created'%step)
-            sr_path = run_df(df_path,step)
+            res_path = '../steps/step'+str(step)
+            run_df(df_path,res_path,step)
             #print('Step %s: model run completed'%step)
             stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length[1]])
             print('Step %s: done'%step)
