@@ -17,6 +17,59 @@ def get_scen(path):
         for d in dec:
             dic[int(stages[s])][d.split('.')[0]] = pd.read_csv(path_s+d)
     return dic
+#%% Function to create folder for each step and a dictonary with their paths
+def step_directories(path,steps):
+    dic_step_paths = dict()
+    for s in range(steps):
+        path_step = path + '/step'+str(s)
+        dic_step_paths[s] = list()
+        dic_step_paths[s].append(path_step)
+        try:
+            os.mkdir(path_step)
+        except OSError:
+            print("Creation of the directory %s failed" % path_step)
+    return dic_step_paths
+#%% Function to create a dictionary os scenarios per step
+def scen_dic(dic_dec,all_steps):
+    dic_scen = dict()
+    for s in range(all_steps):
+        if s in dic_dec: # s like step
+            choices = []
+            for d in dic_dec[s]: # d like decision
+                d_list = []
+                for o in dic_dec[s][d]['OPTION'].unique():
+                    d_list.append(d+str(o))
+                choices.append(d_list)
+            combinations = list(itertools.product(*choices))
+            # step_paths = dic_scen[step]
+            dic_scen[s] = list()
+            for p in range(len(combinations)): # p like path
+                scenario = str()
+                for c in range(len(combinations[p])):
+                    scenario += combinations[p][c]
+                dic_scen[s].append(scenario)
+    return dic_scen
+#%% Function to create directories for each scenario in each step and a dictionary with the paths
+def scen_directories(dic_steps,dic_scen):
+    dic_steps = dic_step_paths #for testing
+    dic_scen = dic_scen #for testing
+    dic_scen_paths = dic_steps
+    for s in dic_steps:
+        if s in dic_scen:
+            for step in dic_steps:
+                if step>(s-1):
+                    step_paths = dic_scen_paths[step]
+                    dic_scen_paths[step] = list()
+                    for path in range(len(step_paths)):
+                        for p in range(len(dic_scen[s])):
+                            scenario = dic_scen[s][p]
+                            path_scenario = step_paths[path]+'/'+scenario
+                            try:
+                                os.mkdir(path_scenario)
+                            except OSError:
+                                print("Creation of the directory %s failed" % path_scenario)
+                            dic_scen_paths[step].append(path_scenario)
+    return dic_scen_paths
 #%% Main function to coordinate the script
 def main(data_path,step_length,param_path):
     param_path = '../data/scenarios/' #for testing
@@ -25,41 +78,12 @@ def main(data_path,step_length,param_path):
     dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
     all_steps = full_steps + 1
     dec_dic = get_scen(param_path) #Create dictionary for stages with decisions creating new scenarios
-    dic_scen_paths =dict()
-    for s in range(all_steps):
-        #s = 1 # for testing
-        data_step_path = '../data/step'+str(s)
-        dic_scen_paths[s] = list()
-        dic_scen_paths[s].append(data_step_path)
-        try:
-            os.mkdir(data_step_path)
-        except OSError:
-            print("Creation of the directory %s failed" % data_step_path)
+    dic_step_paths = step_directories('../data',all_steps)
+    dic_scen = scen_dic(dec_dic,all_steps)
+    dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
     for s in range(all_steps):
         if s in dec_dic: # s like step
-            choices = []
-            for d in dec_dic[s]: # d like decision
-                d_list = []
-                for o in dec_dic[s][d]['OPTION'].unique():
-                    d_list.append(d+str(o))
-                choices.append(d_list)
-            combinations = list(itertools.product(*choices))
-            for step in range(all_steps):
-                if step>(s-1):
-                    step_paths = dic_scen_paths[step]
-                    dic_scen_paths[step] = list()
-                    for path in range(len(step_paths)):
-                        for p in range(len(combinations)): # p like path
-                            scenario = str()
-                            for c in range(len(combinations[p])):
-                                scenario += combinations[p][c]
-                            path_scenario = step_paths[path] + '/' + scenario
-                            try:
-                                os.mkdir(path_scenario)
-                            except OSError:
-                                print("Creation of the directory %s failed" % path_scenario)
-                            dic_scen_paths[step].append(path_scenario)
-                        print('Here we have to create some scenarios')
+            print('Here we have to create some scenarios')
         else:
             print('Run that stage!')
 #%% If run as script
