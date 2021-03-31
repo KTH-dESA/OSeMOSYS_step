@@ -3,6 +3,7 @@
 import pandas as pd
 import os
 import itertools
+import shutil
 import data_split as ds
 #%% Function to derive scenario information from provided folders and files
 def get_scen(path):
@@ -70,6 +71,38 @@ def scen_directories(dic_steps,dic_scen):
                                 print("Creation of the directory %s failed" % path_scenario)
                             dic_scen_paths[step].append(path_scenario)
     return dic_scen_paths
+#%% Function to copy datapackages of remaining steps
+def copy_dps(step,scen,scen_paths):
+    step = 4 #for testing
+    scen = dic_scen #for testing
+    scen_paths = dic_scen_paths #for testing
+    paths_dp = []
+    for s in range(len(scen_paths)):
+        if step==0:
+            for i in range(len(scen_paths[0])):
+                src = '../data/datapackage'+str(s)
+                dest = scen_paths[step][i]+'/datapackage'+str(s)
+                destination = shutil.copytree(src,dest)
+                paths_dp.append(destination)
+        else:
+            if step in scen:
+                if s>=step:
+                    q = 0
+                    for i in range(len(scen_paths[step-1])):
+                        for j in scen[step]:
+                            src = scen_paths[step-1][i] + '/datapackage' + str(s)
+                            dest = scen_paths[step][q]+'/datapackage'+str(s)
+                            destination = shutil.copytree(src,dest)
+                            paths_dp.append(destination)
+                            q += 1
+            else:
+                if s>=step:
+                    for i in range(len(scen_paths[step-1])):
+                        src = scen_paths[step-1][i] + '/datapackage' + str(s)
+                        dest = scen_paths[step][i]+'/datapackage'+str(s)
+                        destination = shutil.copytree(src,dest)
+                        paths_dp.append(destination)
+    return paths_dp
 #%% Main function to coordinate the script
 def main(data_path,step_length,param_path):
     param_path = '../data/scenarios/' #for testing
@@ -82,10 +115,9 @@ def main(data_path,step_length,param_path):
     dic_scen = scen_dic(dec_dic,all_steps)
     dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
     for s in range(all_steps):
-        if s in dec_dic: # s like step
-            print('Here we have to create some scenarios')
-        else:
-            print('Run that stage!')
+        if s==0: 
+            for i in range(all_steps):
+
 #%% If run as script
 if __name__ == '__main__':
     path_param = '../data/scenarios/'
