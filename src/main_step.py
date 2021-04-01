@@ -25,18 +25,18 @@ def run_df(path,results_path,step):
         print("Creation of the directory %s failed" %results_path)
     with open('../model/osemosys.txt', 'r') as file:
         model = file.readlines()
-    rp = "param ResultsPath, symbolic default '../steps/step"+str(step)+"';\n"
+    rp = "param ResultsPath, symbolic default '"+results_path+"';\n"
     model[55] = rp
     with open('../model/osemosys.txt', 'w') as file:
         file.writelines(model)
-    cd_run = 'glpsol -m ../model/osemosys.txt -d ../data/step%s.txt' % str(step)
+    cd_run = 'glpsol -m ../model/osemosys.txt -d %s' % path
     sp.run([cd_run],shell=True,capture_output=True,check=True)
     return results_path
 #%% Main function to coordinate the execution of the script
 def main(path_data,step_length):
     if type(step_length)==int:
         dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
-        df_step0 = '../data/step0'
+        df_step0 = '../data/step0.txt'
         dp_to_df('../data/datapackage0',df_step0)
         res_path = '../steps/step'+str(0)
         # Run step 0
@@ -45,7 +45,7 @@ def main(path_data,step_length):
         print('Step 0: done')
         for s in range(full_steps):
             step = s+1
-            df_path = '../data/step'+str(step)
+            df_path = '../data/step'+str(step)+'.txt'
             dp_path = '../data/datapackage'+str(step)
             dp_d_path = '../data/datapackage'+str(step)+'/data'
             fr_path = '../results'
@@ -60,7 +60,7 @@ def main(path_data,step_length):
             print('Step %s: done'%step)
     else:
         dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
-        df_step0 = '../data/step0'
+        df_step0 = '../data/step0.txt'
         dp_to_df('../data/datapackage0',df_step0)
         # Run step 0
         res_path = '../steps/step'+str(0)
@@ -69,7 +69,7 @@ def main(path_data,step_length):
         print('Step 0: done')
         for s in range(full_steps):
             step = s+1
-            df_path = '../data/step'+str(step)
+            df_path = '../data/step'+str(step)+'.txt'
             dp_path = '../data/datapackage'+str(step)
             dp_d_path = '../data/datapackage'+str(step)+'/data'
             fr_path = '../results'
