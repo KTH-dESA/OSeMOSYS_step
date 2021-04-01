@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import itertools
 import shutil
+import main_step as ms
 import data_split as ds
 #%% Function to derive scenario information from provided folders and files
 def get_scen(path):
@@ -73,9 +74,9 @@ def scen_directories(dic_steps,dic_scen):
     return dic_scen_paths
 #%% Function to copy datapackages of remaining steps
 def copy_dps(step,scen,scen_paths):
-    step = 4 #for testing
-    scen = dic_scen #for testing
-    scen_paths = dic_scen_paths #for testing
+    # step = 4 #for testing
+    # scen = dic_scen #for testing
+    # scen_paths = dic_scen_paths #for testing
     paths_dp = []
     for s in range(len(scen_paths)):
         if step==0:
@@ -115,8 +116,13 @@ def main(data_path,step_length,param_path):
     dic_scen = scen_dic(dec_dic,all_steps)
     dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
     for s in range(all_steps):
+        paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
         if s==0: 
-            for i in range(all_steps):
+            for sce in range(len(dic_scen_paths[s])):
+                path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
+                ms.dp_to_df(paths_dp_step[sce],path_df)
+                path_res_step = '../steps/step'+str(s)+'/'+'/'.join(paths_dp_step[0].split('/')[3:-1])
+                ms.run_df(path_df,path_res_step)
 
 #%% If run as script
 if __name__ == '__main__':
