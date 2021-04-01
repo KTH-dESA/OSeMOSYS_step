@@ -18,7 +18,7 @@ def dp_to_df(dp_path,df_path):
     converter = Context(read_strategy=reader, write_strategy=writer)
     converter.convert(dp_path,df_path)
 #%% Run model
-def run_df(path,results_path,step):
+def run_df(path,results_path):
     try:
         os.mkdir(results_path)
     except OSError:
@@ -40,7 +40,7 @@ def main(path_data,step_length):
         dp_to_df('../data/datapackage0',df_step0)
         res_path = '../steps/step'+str(0)
         # Run step 0
-        run_df(df_step0,res_path,0)
+        run_df(df_step0,res_path)
         stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length])
         print('Step 0: done')
         for s in range(full_steps):
@@ -54,7 +54,7 @@ def main(path_data,step_length):
             dp_to_df(dp_path,df_path)
             #print('Step %s: datafile created'%step)
             res_path = '../steps/step'+str(step)
-            run_df(df_path,res_path,step)
+            run_df(df_path,res_path)
             #print('Step %s: model run completed'%step)
             stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length])
             print('Step %s: done'%step)
@@ -64,7 +64,7 @@ def main(path_data,step_length):
         dp_to_df('../data/datapackage0',df_step0)
         # Run step 0
         res_path = '../steps/step'+str(0)
-        run_df(df_step0,res_path,0)
+        run_df(df_step0,res_path)
         stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length[0]])
         print('Step 0: done')
         for s in range(full_steps):
@@ -78,7 +78,7 @@ def main(path_data,step_length):
             dp_to_df(dp_path,df_path)
             #print('Step %s: datafile created'%step)
             res_path = '../steps/step'+str(step)
-            run_df(df_path,res_path,step)
+            run_df(df_path,res_path)
             #print('Step %s: model run completed'%step)
             stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length[1]])
             print('Step %s: done'%step)
