@@ -6,6 +6,7 @@ import itertools
 import shutil
 import main_step as ms
 import data_split as ds
+import step_to_final as stf
 #%% Function to derive scenario information from provided folders and files
 def get_scen(path):
     #path = '../data/scenarios/' #for testing
@@ -104,6 +105,24 @@ def copy_dps(step,scen,scen_paths):
                         destination = shutil.copytree(src,dest)
                         paths_dp.append(destination)
     return paths_dp
+#%% Create directories and paths for final results
+def final_paths(scen,paths_p_step,step):
+    paths = []
+    if step==0:
+        if 0 in scen:
+            for i in scen[0]:
+                paths.append('../results/'+i)
+        else:
+            paths.append('../results')
+    else:
+        if step in scen:
+            for j in paths_p_step:
+                for i in scen[step]:
+                    paths.append(j+'/'+i)
+        else:
+            for j in paths_p_step:
+                paths.append(j)
+    return paths
 #%% Main function to coordinate the script
 def main(data_path,step_length,param_path):
     param_path = '../data/scenarios/' #for testing
@@ -115,6 +134,7 @@ def main(data_path,step_length,param_path):
     dic_step_paths = step_directories('../data',all_steps)
     dic_scen = scen_dic(dec_dic,all_steps)
     dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
+    dic_fin_res_path = dict()
     for s in range(all_steps):
         paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
         if s==0: 
@@ -123,6 +143,8 @@ def main(data_path,step_length,param_path):
                 ms.dp_to_df(paths_dp_step[sce],path_df)
                 path_res_step = '../steps/step'+str(s)+'/'+'/'.join(paths_dp_step[0].split('/')[3:-1])
                 ms.run_df(path_df,path_res_step)
+                path_res_fin = '../results/'+
+                stf.main(path_res_step,)
 
 #%% If run as script
 if __name__ == '__main__':
