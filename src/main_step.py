@@ -41,7 +41,7 @@ def main(path_data,step_length):
         res_path = '../steps/step'+str(0)
         # Run step 0
         run_df(df_step0,res_path)
-        stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length])
+        stf.main('../steps/step0','../results/',0,dic_yr_in_steps[0].iloc[:step_length])
         print('Step 0: done')
         for s in range(full_steps):
             step = s+1
@@ -56,7 +56,7 @@ def main(path_data,step_length):
             res_path = '../steps/step'+str(step)
             run_df(df_path,res_path)
             #print('Step %s: model run completed'%step)
-            stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length])
+            stf.main('../steps/step'+str(step),'../results/',step,dic_yr_in_steps[step].iloc[:step_length])
             print('Step %s: done'%step)
     else:
         dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
@@ -65,7 +65,7 @@ def main(path_data,step_length):
         # Run step 0
         res_path = '../steps/step'+str(0)
         run_df(df_step0,res_path)
-        stf.main('../steps/step','../results/',0,dic_yr_in_steps[0].iloc[:step_length[0]])
+        stf.main('../steps/step0','../results/',0,dic_yr_in_steps[0].iloc[:step_length[0]])
         print('Step 0: done')
         for s in range(full_steps):
             step = s+1
@@ -80,7 +80,7 @@ def main(path_data,step_length):
             res_path = '../steps/step'+str(step)
             run_df(df_path,res_path)
             #print('Step %s: model run completed'%step)
-            stf.main('../steps/step','../results/',step,dic_yr_in_steps[step].iloc[:step_length[1]])
+            stf.main('../steps/step'+str(step),'../results/',step,dic_yr_in_steps[step].iloc[:step_length[1]])
             print('Step %s: done'%step)
 #%% If run as script
 if __name__ == '__main__':

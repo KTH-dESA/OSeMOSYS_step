@@ -59,8 +59,7 @@ def write_res(path,res_final):
         res_final[df].to_csv(path+df,index=False)
     return
 #%% Main function to coordinate the script
-def main(path_step,path_final,step,yr_in_step):
-    path_step_res = path_step+str(step)
+def main(path_step_res,path_final,step,yr_in_step):
     dic_step = read_step_res(path_step_res,yr_in_step)
     if step > 0:
         dic_old_final = read_res_final(path_final)
