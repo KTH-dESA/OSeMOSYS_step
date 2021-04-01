@@ -11,14 +11,12 @@ import data_split
 import step_to_final as stf
 import results_to_next_step as rtns
 #%% Convert datapackage to datafile
-def dp_to_df(dp_path,step):
+def dp_to_df(dp_path,df_path):
     # otoole datapackage to datafile
     reader = ReadDatapackage()
     writer = WriteDatafile()
     converter = Context(read_strategy=reader, write_strategy=writer)
-    df_path = '../data/step%s.txt' % str(step)
     converter.convert(dp_path,df_path)
-    return df_path
 #%% Run model
 def run_df(path,results_path,step):
     try:
@@ -38,7 +36,8 @@ def run_df(path,results_path,step):
 def main(path_data,step_length):
     if type(step_length)==int:
         dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
-        df_step0 = dp_to_df('../data/datapackage0',0)
+        df_step0 = '../data/step0'
+        dp_to_df('../data/datapackage0',df_step0)
         res_path = '../steps/step'+str(0)
         # Run step 0
         run_df(df_step0,res_path,0)
@@ -46,12 +45,13 @@ def main(path_data,step_length):
         print('Step 0: done')
         for s in range(full_steps):
             step = s+1
+            df_path = '../data/step'+str(step)
             dp_path = '../data/datapackage'+str(step)
             dp_d_path = '../data/datapackage'+str(step)+'/data'
             fr_path = '../results'
             rtns.main(dp_d_path,fr_path)
             #print('Step %s: ResCap in datapackage'%step)
-            df_path = dp_to_df(dp_path,step)
+            dp_to_df(dp_path,df_path)
             #print('Step %s: datafile created'%step)
             res_path = '../steps/step'+str(step)
             run_df(df_path,res_path,step)
@@ -60,7 +60,8 @@ def main(path_data,step_length):
             print('Step %s: done'%step)
     else:
         dic_yr_in_steps,full_steps = data_split.split_dp(path_data,step_length)
-        df_step0 = dp_to_df('../data/datapackage0',0)
+        df_step0 = '../data/step0'
+        dp_to_df('../data/datapackage0',df_step0)
         # Run step 0
         res_path = '../steps/step'+str(0)
         run_df(df_step0,res_path,0)
@@ -68,12 +69,13 @@ def main(path_data,step_length):
         print('Step 0: done')
         for s in range(full_steps):
             step = s+1
+            df_path = '../data/step'+str(step)
             dp_path = '../data/datapackage'+str(step)
             dp_d_path = '../data/datapackage'+str(step)+'/data'
             fr_path = '../results'
             rtns.main(dp_d_path,fr_path)
             #print('Step %s: ResCap in datapackage'%step)
-            df_path = dp_to_df(dp_path,step)
+            dp_to_df(dp_path,df_path)
             #print('Step %s: datafile created'%step)
             res_path = '../steps/step'+str(step)
             run_df(df_path,res_path,step)
