@@ -111,14 +111,14 @@ def final_paths(scen,paths_p_step,step):
     if step==0:
         if 0 in scen:
             for i in scen[0]:
-                paths.append('../results/'+i)
+                paths.append('../results/'+i+'/')
         else:
-            paths.append('../results')
+            paths.append('../results/')
     else:
         if step in scen:
             for j in paths_p_step:
                 for i in scen[step]:
-                    paths.append(j+'/'+i)
+                    paths.append(j+'/'+i+'/')
         else:
             for j in paths_p_step:
                 paths.append(j)
@@ -137,14 +137,14 @@ def main(data_path,step_length,param_path):
     dic_fin_res_path = dict()
     for s in range(all_steps):
         paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
-        if s==0: 
+        if s==0:
+            dic_fin_res_path[s] = final_paths(dic_scen,[],s)
             for sce in range(len(dic_scen_paths[s])):
                 path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
                 ms.dp_to_df(paths_dp_step[sce],path_df)
                 path_res_step = '../steps/step'+str(s)+'/'+'/'.join(paths_dp_step[0].split('/')[3:-1])
                 ms.run_df(path_df,path_res_step)
-                path_res_fin = '../results/'+
-                stf.main(path_res_step,)
+                stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
 
 #%% If run as script
 if __name__ == '__main__':
