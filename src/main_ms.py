@@ -141,55 +141,98 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
                 shutil.copytree(src,dest)
 #%% Main function to coordinate the script
 def main(data_path,step_length,param_path):
-    param_path = '../data/scenarios/' #for testing
-    data_path = '../data/utopia.txt' #for testing
-    step_length = 5 #for testing
-    dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
-    all_steps = full_steps + 1
-    dec_dic = get_scen(param_path) #Create dictionary for stages with decisions creating new scenarios
-    dic_step_paths = step_directories('../data',all_steps)
-    dic_scen = scen_dic(dec_dic,all_steps)
-    dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
-    dic_step_res_paths = step_directories('../steps',all_steps)
-    dic_step_scen_paths = scen_directories(dic_step_res_paths,dic_scen)
-    dic_fin_res_path = dict()
-    for s in range(all_steps):
-        paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
-        if s==0:
-            dic_fin_res_path[s] = final_paths(dic_scen,[],s)
-            for sce in range(len(dic_scen_paths[s])):
-                path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
-                ms.dp_to_df(paths_dp_step[sce],path_df)
-                path_res_step = dic_step_scen_paths[s][sce]
-                ms.run_df(path_df,path_res_step)
-                stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
-        else:
-            dic_fin_res_path[s] = final_paths(dic_scen,dic_fin_res_path[s-1],s)
-            copy_fr(s,dic_scen,dic_fin_res_path[s-1])
-            i = 0
-            for sce in range(len(dic_scen_paths[s-1])):
-                if s in dic_scen:
-                    for scn in range(len(dic_scen[s])):
-                        path_dp_d = paths_dp_step[i]+'/data'
-                        rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
-                        path_df = '/'.join(paths_dp_step[i].split('/')[:-1])+'.txt'
-                        ms.dp_to_df(paths_dp_step[i],path_df)
-                        path_res_step = dic_step_scen_paths[s][i]
-                        ms.run_df(path_df,path_res_step)
-                        stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length])
-                        i += 1
-                else:
-                    path_dp_d = paths_dp_step[sce]+'/data'
-                    rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
+    # param_path = '../data/scenarios/' #for testing
+    # data_path = '../data/utopia.txt' #for testing
+    # step_length = [1,5] #for testing
+    if type(step_length)==int:
+        dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
+        all_steps = len(dic_yr_in_steps)
+        dec_dic = get_scen(param_path) #Create dictionary for stages with decisions creating new scenarios
+        dic_step_paths = step_directories('../data',all_steps)
+        dic_scen = scen_dic(dec_dic,all_steps)
+        dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
+        dic_step_res_paths = step_directories('../steps',all_steps)
+        dic_step_scen_paths = scen_directories(dic_step_res_paths,dic_scen)
+        dic_fin_res_path = dict()
+        for s in range(all_steps):
+            paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
+            if s==0:
+                dic_fin_res_path[s] = final_paths(dic_scen,[],s)
+                for sce in range(len(dic_scen_paths[s])):
                     path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
                     ms.dp_to_df(paths_dp_step[sce],path_df)
                     path_res_step = dic_step_scen_paths[s][sce]
                     ms.run_df(path_df,path_res_step)
                     stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
-
+            else:
+                dic_fin_res_path[s] = final_paths(dic_scen,dic_fin_res_path[s-1],s)
+                copy_fr(s,dic_scen,dic_fin_res_path[s-1])
+                i = 0
+                for sce in range(len(dic_scen_paths[s-1])):
+                    if s in dic_scen:
+                        for scn in range(len(dic_scen[s])):
+                            path_dp_d = paths_dp_step[i]+'/data'
+                            rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
+                            path_df = '/'.join(paths_dp_step[i].split('/')[:-1])+'.txt'
+                            ms.dp_to_df(paths_dp_step[i],path_df)
+                            path_res_step = dic_step_scen_paths[s][i]
+                            ms.run_df(path_df,path_res_step)
+                            stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length])
+                            i += 1
+                    else:
+                        path_dp_d = paths_dp_step[sce]+'/data'
+                        rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
+                        path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
+                        ms.dp_to_df(paths_dp_step[sce],path_df)
+                        path_res_step = dic_step_scen_paths[s][sce]
+                        ms.run_df(path_df,path_res_step)
+                        stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
+    else:
+        dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
+        all_steps = len(dic_yr_in_steps)
+        dec_dic = get_scen(param_path) #Create dictionary for stages with decisions creating new scenarios
+        dic_step_paths = step_directories('../data',all_steps)
+        dic_scen = scen_dic(dec_dic,all_steps)
+        dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
+        dic_step_res_paths = step_directories('../steps',all_steps)
+        dic_step_scen_paths = scen_directories(dic_step_res_paths,dic_scen)
+        dic_fin_res_path = dict()
+        for s in range(all_steps):
+            paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
+            if s==0:
+                dic_fin_res_path[s] = final_paths(dic_scen,[],s)
+                for sce in range(len(dic_scen_paths[s])):
+                    path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
+                    ms.dp_to_df(paths_dp_step[sce],path_df)
+                    path_res_step = dic_step_scen_paths[s][sce]
+                    ms.run_df(path_df,path_res_step)
+                    stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[0]])
+            else:
+                dic_fin_res_path[s] = final_paths(dic_scen,dic_fin_res_path[s-1],s)
+                copy_fr(s,dic_scen,dic_fin_res_path[s-1])
+                i = 0
+                for sce in range(len(dic_scen_paths[s-1])):
+                    if s in dic_scen:
+                        for scn in range(len(dic_scen[s])):
+                            path_dp_d = paths_dp_step[i]+'/data'
+                            rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
+                            path_df = '/'.join(paths_dp_step[i].split('/')[:-1])+'.txt'
+                            ms.dp_to_df(paths_dp_step[i],path_df)
+                            path_res_step = dic_step_scen_paths[s][i]
+                            ms.run_df(path_df,path_res_step)
+                            stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length[1]])
+                            i += 1
+                    else:
+                        path_dp_d = paths_dp_step[sce]+'/data'
+                        rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
+                        path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
+                        ms.dp_to_df(paths_dp_step[sce],path_df)
+                        path_res_step = dic_step_scen_paths[s][sce]
+                        ms.run_df(path_df,path_res_step)
+                        stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[1]])
 #%% If run as script
 if __name__ == '__main__':
     path_param = '../data/scenarios/'
     path_data = '../data/utopia.txt'
-    step_length = 5
+    step_length = [1,5]
     main(path_data,step_length,path_param)
