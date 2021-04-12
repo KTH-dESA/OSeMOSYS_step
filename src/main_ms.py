@@ -69,9 +69,8 @@ def scen_directories(dic_steps,dic_scen):
                     step_paths = dic_scen_paths[step]
                     dic_scen_paths[step] = list()
                     for path in range(len(step_paths)):
-                        for p in range(len(dic_scen[s])):
-                            scenario = dic_scen[s][p]
-                            path_scenario = step_paths[path]+'/'+scenario
+                        for p in list(dic_scen[s].keys()):
+                            path_scenario = step_paths[path]+'/'+p
                             try:
                                 os.mkdir(path_scenario)
                             except OSError:
