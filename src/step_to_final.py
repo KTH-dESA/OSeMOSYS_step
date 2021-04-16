@@ -24,6 +24,7 @@ def read_step_res(path,yr_in_step):
 def read_res_final(path):
 # Check if provided directory is correct and contains data
 #    path ='../results/' #for testing
+    path = path+'res/'
     if os.path.exists(path) and os.path.isdir(path):
         if not os.listdir(path):
             print("Directory is empty")
@@ -46,6 +47,13 @@ def step_to_final(res_step,res_final):
 def write_res(path,res_final):
     #path = '../results/' #for testing
     #res_final = dic_res_step #for testing
+    path = path+'res'
+    #if not os.path.exists(path) and os.path.isdir(path):
+    try:
+        os.mkdir(path)
+    except OSError:
+        print("Creation of the directory %s failed" %path)
+    path = path + '/'
     for filename in os.listdir(path):
         file_path = os.path.join(path, filename)
         try:
@@ -59,8 +67,7 @@ def write_res(path,res_final):
         res_final[df].to_csv(path+df,index=False)
     return
 #%% Main function to coordinate the script
-def main(path_step,path_final,step,yr_in_step):
-    path_step_res = path_step+str(step)
+def main(path_step_res,path_final,step,yr_in_step):
     dic_step = read_step_res(path_step_res,yr_in_step)
     if step > 0:
         dic_old_final = read_res_final(path_final)

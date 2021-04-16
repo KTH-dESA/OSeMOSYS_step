@@ -8,7 +8,7 @@ def main(dp_path,fr_path):
     #fr_path = '../results' #for testing
     rc_path = dp_path +'/ResidualCapacity.csv'
     ol_path = dp_path +'/OperationalLife.csv'
-    nc_path = fr_path +'/NewCapacity.csv'
+    nc_path = fr_path +'/res/NewCapacity.csv'
     yr_path = dp_path +'/YEAR.csv'
     df_init = pd.read_csv(rc_path)
     df_ol = pd.read_csv(ol_path)
