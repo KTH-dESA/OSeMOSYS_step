@@ -80,7 +80,7 @@ def scen_directories(dic_steps,dic_scen):
     return dic_scen_paths
 #%% Function to copy datapackages of remaining steps
 def copy_dps(step,scen,scen_paths):
-    # step = 4 #for testing
+    # step = 3 #for testing
     # scen = dic_scen #for testing
     # scen_paths = dic_scen_paths #for testing
     paths_dp = []
@@ -96,21 +96,25 @@ def copy_dps(step,scen,scen_paths):
                 if s>=step:
                     q = 0
                     for i in range(len(scen_paths[step-1])):
-                        if scen_paths[step-1][i]!='none':
+                        if scen_paths[step][q]!='none':
                             for j in scen[step]:
                                 src = scen_paths[step-1][i] + '/datapackage' + str(s)
                                 dest = scen_paths[step][q]+'/datapackage'+str(s)
                                 destination = shutil.copytree(src,dest)
                                 paths_dp.append(destination)
                                 q += 1
+                        else:
+                            paths_dp.append('none')
             else:
                 if s>=step:
                     for i in range(len(scen_paths[step-1])):
-                        if scen_paths[step-1][i]!='none':
+                        if scen_paths[step][i]!='none':
                             src = scen_paths[step-1][i] + '/datapackage' + str(s)
                             dest = scen_paths[step][i]+'/datapackage'+str(s)
                             destination = shutil.copytree(src,dest)
                             paths_dp.append(destination)
+                        else:
+                            paths_dp.append('none')
     return paths_dp
 #%% Create directories and paths for final results
 def final_paths(scen,paths_p_step,step):
@@ -147,9 +151,9 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
                 shutil.copytree(src,dest)
 #%% Main function to coordinate the script
 def main(data_path,step_length,param_path):
-    param_path = '../data/scenarios/' #for testing
-    data_path = '../data/utopia.txt' #for testing
-    step_length = [1,5] #for testing
+    # param_path = '../data/scenarios/' #for testing
+    # data_path = '../data/utopia.txt' #for testing
+    # step_length = [1,5] #for testing
     if type(step_length)==int:
         dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
         all_steps = len(dic_yr_in_steps)
@@ -198,11 +202,12 @@ def main(data_path,step_length,param_path):
                                     p = len(dic_scen_paths[s][sce].split('/'))-1
                                     for z in range(s+1,len(dic_scen_paths)):
                                         for x in range(len(dic_scen_paths[z])):
-                                            if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][sce].split('/')[-1]:
-                                                dic_scen_paths[z][x] = 'none'
+                                            if dic_scen_paths[z][x]!='none':
+                                                if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][sce].split('/')[-1]:
+                                                    dic_scen_paths[z][x] = 'none'
                                 else:
                                     stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length])
-                                i += 1
+                            i += 1
                     else:
                         if dic_scen_paths[s][sce] != 'none':
                             path_dp_d = paths_dp_step[sce]+'/data'
@@ -211,7 +216,15 @@ def main(data_path,step_length,param_path):
                             ms.dp_to_df(paths_dp_step[sce],path_df)
                             path_res_step = dic_step_scen_paths[s][sce]
                             ms.run_df(path_df,path_res_step)
-                            stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
+                            if not os.listdir(path_res_step):
+                                    p = len(dic_scen_paths[s][sce].split('/'))-1
+                                    for z in range(s+1,len(dic_scen_paths)):
+                                        for x in range(len(dic_scen_paths[z])):
+                                            if dic_scen_paths[z][x]!='none':
+                                                if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][sce].split('/')[-1]:
+                                                    dic_scen_paths[z][x] = 'none'
+                            else:
+                                stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
     else:
         dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
         all_steps = len(dic_yr_in_steps)
@@ -237,8 +250,9 @@ def main(data_path,step_length,param_path):
                         if not os.listdir(path_res_step):
                             for z in range(s+1,len(dic_scen_paths)):
                                 for x in range(len(dic_scen_paths[z])):
-                                    if dic_scen_paths[z][x].split('/')[3] == dic_scen_paths[s][sce].split('/')[-1]:
-                                        dic_scen_paths[z][x] = 'none'
+                                    if dic_scen_paths[z][x]!='none':
+                                        if dic_scen_paths[z][x].split('/')[3] == dic_scen_paths[s][sce].split('/')[-1]:
+                                            dic_scen_paths[z][x] = 'none'
                         else:
                             stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[0]])
             else:
@@ -260,11 +274,12 @@ def main(data_path,step_length,param_path):
                                     p = len(dic_scen_paths[s][sce].split('/'))-1
                                     for z in range(s+1,len(dic_scen_paths)):
                                         for x in range(len(dic_scen_paths[z])):
-                                            if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][sce].split('/')[-1]:
-                                                dic_scen_paths[z][x] = 'none'
+                                            if dic_scen_paths[z][x]!='none':
+                                                if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][sce].split('/')[-1]:
+                                                    dic_scen_paths[z][x] = 'none'
                                 else:
                                     stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length[1]])
-                                i += 1
+                            i += 1
                     else:
                         if dic_scen_paths[s][sce] != 'none':
                             path_dp_d = paths_dp_step[sce]+'/data'
@@ -273,7 +288,15 @@ def main(data_path,step_length,param_path):
                             ms.dp_to_df(paths_dp_step[sce],path_df)
                             path_res_step = dic_step_scen_paths[s][sce]
                             ms.run_df(path_df,path_res_step)
-                            stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[1]])
+                            if not os.listdir(path_res_step):
+                                    p = len(dic_scen_paths[s][sce].split('/'))-1
+                                    for z in range(s+1,len(dic_scen_paths)):
+                                        for x in range(len(dic_scen_paths[z])):
+                                            if dic_scen_paths[z][x]!='none':
+                                                if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][sce].split('/')[-1]:
+                                                    dic_scen_paths[z][x] = 'none'
+                            else:
+                                stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[1]])
 #%% If run as script
 if __name__ == '__main__':
     path_param = '../data/scenarios/'
