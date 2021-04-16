@@ -96,19 +96,21 @@ def copy_dps(step,scen,scen_paths):
                 if s>=step:
                     q = 0
                     for i in range(len(scen_paths[step-1])):
-                        for j in scen[step]:
-                            src = scen_paths[step-1][i] + '/datapackage' + str(s)
-                            dest = scen_paths[step][q]+'/datapackage'+str(s)
-                            destination = shutil.copytree(src,dest)
-                            paths_dp.append(destination)
-                            q += 1
+                        if scen_paths[step-1][i]!='none':
+                            for j in scen[step]:
+                                src = scen_paths[step-1][i] + '/datapackage' + str(s)
+                                dest = scen_paths[step][q]+'/datapackage'+str(s)
+                                destination = shutil.copytree(src,dest)
+                                paths_dp.append(destination)
+                                q += 1
             else:
                 if s>=step:
                     for i in range(len(scen_paths[step-1])):
-                        src = scen_paths[step-1][i] + '/datapackage' + str(s)
-                        dest = scen_paths[step][i]+'/datapackage'+str(s)
-                        destination = shutil.copytree(src,dest)
-                        paths_dp.append(destination)
+                        if scen_paths[step-1][i]!='none':
+                            src = scen_paths[step-1][i] + '/datapackage' + str(s)
+                            dest = scen_paths[step][i]+'/datapackage'+str(s)
+                            destination = shutil.copytree(src,dest)
+                            paths_dp.append(destination)
     return paths_dp
 #%% Create directories and paths for final results
 def final_paths(scen,paths_p_step,step):
@@ -175,7 +177,8 @@ def main(data_path,step_length,param_path):
                                 for x in range(len(dic_scen_paths[z])):
                                     if dic_scen_paths[z][x].split('/')[3] == dic_scen_paths[s][sce].split('/')[-1]:
                                         dic_scen_paths[z][x] = 'none'
-                        stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
+                        else:
+                            stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
             else:
                 dic_fin_res_path[s] = final_paths(dic_scen,dic_fin_res_path[s-1],s)
                 copy_fr(s,dic_scen,dic_fin_res_path[s-1])
@@ -197,7 +200,8 @@ def main(data_path,step_length,param_path):
                                         for x in range(len(dic_scen_paths[z])):
                                             if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][sce].split('/')[-1]:
                                                 dic_scen_paths[z][x] = 'none'
-                                stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length])
+                                else:
+                                    stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length])
                                 i += 1
                     else:
                         if dic_scen_paths[s][sce] != 'none':
@@ -235,7 +239,8 @@ def main(data_path,step_length,param_path):
                                 for x in range(len(dic_scen_paths[z])):
                                     if dic_scen_paths[z][x].split('/')[3] == dic_scen_paths[s][sce].split('/')[-1]:
                                         dic_scen_paths[z][x] = 'none'
-                        stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[0]])
+                        else:
+                            stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[0]])
             else:
                 dic_fin_res_path[s] = final_paths(dic_scen,dic_fin_res_path[s-1],s)
                 copy_fr(s,dic_scen,dic_fin_res_path[s-1])
@@ -257,7 +262,8 @@ def main(data_path,step_length,param_path):
                                         for x in range(len(dic_scen_paths[z])):
                                             if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][sce].split('/')[-1]:
                                                 dic_scen_paths[z][x] = 'none'
-                                stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length[1]])
+                                else:
+                                    stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length[1]])
                                 i += 1
                     else:
                         if dic_scen_paths[s][sce] != 'none':
