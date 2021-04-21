@@ -193,7 +193,7 @@ def main(data_path,step_length,param_path):
                             if dic_scen_paths[s][i] != 'none':
                                 path_dp_d = paths_dp_step[i]+'/data'
                                 rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
-                                ns.main(dic_scen_paths[s][sce],s,dec_dic[s],dic_scen[s][dic_scen_paths[s][sce].split('/')[-1]],dic_yr_in_steps)
+                                ns.main(dic_scen_paths[s][i],s,dec_dic[s],dic_scen[s][dic_scen_paths[s][i].split('/')[-1]],dic_yr_in_steps)
                                 path_df = '/'.join(paths_dp_step[i].split('/')[:-1])+'.txt'
                                 ms.dp_to_df(paths_dp_step[i],path_df)
                                 path_res_step = dic_step_scen_paths[s][i]
@@ -265,7 +265,7 @@ def main(data_path,step_length,param_path):
                             if dic_scen_paths[s][i] != 'none':
                                 path_dp_d = paths_dp_step[i]+'/data'
                                 rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
-                                ns.main(dic_scen_paths[s][sce],s,dec_dic[s],dic_scen[s][dic_scen_paths[s][sce].split('/')[-1]],dic_yr_in_steps)
+                                ns.main(dic_scen_paths[s][i],s,dec_dic[s],dic_scen[s][dic_scen_paths[s][i].split('/')[-1]],dic_yr_in_steps)
                                 path_df = '/'.join(paths_dp_step[i].split('/')[:-1])+'.txt'
                                 ms.dp_to_df(paths_dp_step[i],path_df)
                                 path_res_step = dic_step_scen_paths[s][i]
