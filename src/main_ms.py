@@ -199,11 +199,11 @@ def main(data_path,step_length,param_path):
                                 path_res_step = dic_step_scen_paths[s][i]
                                 ms.run_df(path_df,path_res_step)
                                 if not os.listdir(path_res_step):
-                                    p = len(dic_scen_paths[s][sce].split('/'))-1
+                                    p = len(dic_scen_paths[s][i].split('/'))-1
                                     for z in range(s+1,len(dic_scen_paths)):
                                         for x in range(len(dic_scen_paths[z])):
                                             if dic_scen_paths[z][x]!='none':
-                                                if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][sce].split('/')[-1]:
+                                                if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][i].split('/')[-1]:
                                                     dic_scen_paths[z][x] = 'none'
                                 else:
                                     stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length])
@@ -271,11 +271,11 @@ def main(data_path,step_length,param_path):
                                 path_res_step = dic_step_scen_paths[s][i]
                                 ms.run_df(path_df,path_res_step)
                                 if not os.listdir(path_res_step):
-                                    p = len(dic_scen_paths[s][sce].split('/'))-1
+                                    p = len(dic_scen_paths[s][i].split('/'))-1
                                     for z in range(s+1,len(dic_scen_paths)):
                                         for x in range(len(dic_scen_paths[z])):
                                             if dic_scen_paths[z][x]!='none':
-                                                if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][sce].split('/')[-1]:
+                                                if dic_scen_paths[z][x].split('/')[p] == dic_scen_paths[s][i].split('/')[-1]:
                                                     dic_scen_paths[z][x] = 'none'
                                 else:
                                     stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length[1]])
