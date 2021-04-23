@@ -9,6 +9,7 @@ import data_split as ds
 import step_to_final as stf
 import results_to_next_step as rtns
 import new_scen as ns
+import solv as sl
 #%% Function to derive scenario information from provided folders and files
 def get_scen(path):
     #path = '../data/scenarios/' #for testing
@@ -150,7 +151,8 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
                 dest = s + t + '/res'
                 shutil.copytree(src,dest)
 #%% Main function to coordinate the script
-def main(data_path,step_length,param_path):
+"The main function of main_ms takes always three inputs and can take the optional input solver. The three needed inputs are the path to the datafile of the model, the step length - either an integer in case the step length is always the same or a list of two integers, the first indicating the length of the first step and the second of the remaining steps - and the path to the folder with the csv files containing the data for the parameter to varied between scenarios. The solver can be indicate in the following way 'solver=gurobi'"
+def main(data_path,step_length,param_path,solver=None):
     # param_path = '../data/scenarios/' #for testing
     # data_path = '../data/utopia.txt' #for testing
     # step_length = [1,5] #for testing
@@ -175,7 +177,10 @@ def main(data_path,step_length,param_path):
                         path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
                         ms.dp_to_df(paths_dp_step[sce],path_df)
                         path_res_step = dic_step_scen_paths[s][sce]
-                        ms.run_df(path_df,path_res_step)
+                        if solver!=None:
+                            sl.main(solver,path_df,path_res_step)
+                        else:
+                            ms.run_df(path_df,path_res_step)
                         if not os.listdir(path_res_step):
                             for z in range(s+1,len(dic_scen_paths)):
                                 for x in range(len(dic_scen_paths[z])):
@@ -197,7 +202,10 @@ def main(data_path,step_length,param_path):
                                 path_df = '/'.join(paths_dp_step[i].split('/')[:-1])+'.txt'
                                 ms.dp_to_df(paths_dp_step[i],path_df)
                                 path_res_step = dic_step_scen_paths[s][i]
-                                ms.run_df(path_df,path_res_step)
+                                if solver!=None:
+                                    sl.main(solver,path_df,path_res_step)
+                                else:
+                                    ms.run_df(path_df,path_res_step)
                                 if not os.listdir(path_res_step):
                                     p = len(dic_scen_paths[s][i].split('/'))-1
                                     for z in range(s+1,len(dic_scen_paths)):
@@ -215,7 +223,10 @@ def main(data_path,step_length,param_path):
                             path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
                             ms.dp_to_df(paths_dp_step[sce],path_df)
                             path_res_step = dic_step_scen_paths[s][sce]
-                            ms.run_df(path_df,path_res_step)
+                            if solver!=None:
+                                sl.main(solver,path_df,path_res_step)
+                            else:
+                                ms.run_df(path_df,path_res_step)
                             if not os.listdir(path_res_step):
                                     p = len(dic_scen_paths[s][sce].split('/'))-1
                                     for z in range(s+1,len(dic_scen_paths)):
@@ -246,7 +257,10 @@ def main(data_path,step_length,param_path):
                         path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
                         ms.dp_to_df(paths_dp_step[sce],path_df)
                         path_res_step = dic_step_scen_paths[s][sce]
-                        ms.run_df(path_df,path_res_step)
+                        if solver!=None:
+                            sl.main(solver,path_df,path_res_step)
+                        else:
+                            ms.run_df(path_df,path_res_step)
                         if not os.listdir(path_res_step):
                             for z in range(s+1,len(dic_scen_paths)):
                                 for x in range(len(dic_scen_paths[z])):
@@ -269,7 +283,10 @@ def main(data_path,step_length,param_path):
                                 path_df = '/'.join(paths_dp_step[i].split('/')[:-1])+'.txt'
                                 ms.dp_to_df(paths_dp_step[i],path_df)
                                 path_res_step = dic_step_scen_paths[s][i]
-                                ms.run_df(path_df,path_res_step)
+                                if solver!=None:
+                                    sl.main(solver,path_df,path_res_step)
+                                else:
+                                    ms.run_df(path_df,path_res_step)
                                 if not os.listdir(path_res_step):
                                     p = len(dic_scen_paths[s][i].split('/'))-1
                                     for z in range(s+1,len(dic_scen_paths)):
@@ -287,7 +304,10 @@ def main(data_path,step_length,param_path):
                             path_df = '/'.join(paths_dp_step[sce].split('/')[:-1])+'.txt'
                             ms.dp_to_df(paths_dp_step[sce],path_df)
                             path_res_step = dic_step_scen_paths[s][sce]
-                            ms.run_df(path_df,path_res_step)
+                            if solver!=None:
+                                sl.main(solver,path_df,path_res_step)
+                            else:
+                                ms.run_df(path_df,path_res_step)
                             if not os.listdir(path_res_step):
                                     p = len(dic_scen_paths[s][sce].split('/'))-1
                                     for z in range(s+1,len(dic_scen_paths)):
@@ -302,4 +322,4 @@ if __name__ == '__main__':
     path_param = '../data/scenarios/'
     path_data = '../data/utopia.txt'
     step_length = [1,5]
-    main(path_data,step_length,path_param)
+    main(path_data,step_length,path_param,solver='gurobi')
