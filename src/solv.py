@@ -30,6 +30,10 @@ def sol_gurobi(path_lp,path_res):
     sp.run([str_cmd],shell=True,capture_output=True)
     if os.path.exists(path_res+'.ilp'):
         path_sol = None
+    if os.path.exists(path_lp):
+        os.remove(path_lp)
+    else:
+        print('The file %s does not exist.' % path_lp)
     return path_sol
 #%% Function to solve lp file using cbc
 def sol_cbc(path_lp):
