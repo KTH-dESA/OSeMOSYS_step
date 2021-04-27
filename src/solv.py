@@ -48,6 +48,8 @@ def csv_gurobi(path_sol,path_res):
     writer = WriteCsv()
     converter = Context(read_strategy=reader,write_strategy=writer)
     converter.convert(path_sol,path_res)
+    if os.path.exists(path_sol):
+        os.remove(path_sol)
 #%% main function
 def main(solver,path_df,path_res):
     # solver ='gurobi' #for testing
