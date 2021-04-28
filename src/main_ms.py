@@ -156,6 +156,7 @@ def main(data_path,step_length,param_path,solver=None):
     # param_path = '../data/scenarios/' #for testing
     # data_path = '../data/utopia.txt' #for testing
     # step_length = [1,5] #for testing
+    solver=None #for testing
     if type(step_length)==int:
         dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
         all_steps = len(dic_yr_in_steps)
@@ -216,6 +217,7 @@ def main(data_path,step_length,param_path,solver=None):
                                 else:
                                     stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length])
                             i += 1
+                        shutil.rmtree(dic_fin_res_path[s-1][sce]+'res')
                     else:
                         if dic_scen_paths[s][sce] != 'none':
                             path_dp_d = paths_dp_step[sce]+'/data'
@@ -297,6 +299,7 @@ def main(data_path,step_length,param_path,solver=None):
                                 else:
                                     stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length[1]])
                             i += 1
+                        shutil.rmtree(dic_fin_res_path[s-1][sce]+'res')
                     else:
                         if dic_scen_paths[s][sce] != 'none':
                             path_dp_d = paths_dp_step[sce]+'/data'
