@@ -18,13 +18,18 @@ def main(df,dic_yrs,path_data,step,dp):
     path_data_ps = '../data/step%(step)s/%(scens)s/datapackage%(dp_p)s/data' % {'step': step-1, 'scens': scens, 'dp_p': dp-1}
     last_yr_ps = dic_yrs[dp]['VALUE'].min()-1
     df_w = df[df['YEAR'].isnull()]
+    col = list(df_w.columns)
+    df_out = pd.DataFrame(columns=col)
     for p in df_w['PARAMETER'].unique():
-        for t in df_w['TECHNOLOGY'].unique():
-            df_para_ps = pd.read_csv(path_data_ps+'/'+p+'.csv')
-            if len(df_para_ps)==0:
-                sys.exit('Seems like you are providng a growth rate for a parameter that has not been defined before. For parameter that have not been defined before, please provide in the first step where the paremter is to be defined time series.')
-            last_value_ps = df_para_ps.iloc[df_para_ps[df_para_ps['YEAR']==1995].index.tolist()[0]]['VALUE']
-            growth = df_w.iloc[df_w[(df_w['PARAMETER']==p)&(df_w['TECHNOLOGY']==t)].index.tolist()[0]]['VALUE']
-            
-            print(t)
+        for r in df_w['REGION'].unique():
+            for t in df_w['TECHNOLOGY'].unique():
+                df_para_ps = pd.read_csv(path_data_ps+'/'+p+'.csv')
+                if len(df_para_ps)==0:
+                    sys.exit('Seems like you are providng a growth rate for a parameter that has not been defined before. For parameter that have not been defined before, please provide in the first step where the paremter is to be defined time series.')
+                last_value_ps = df_para_ps.iloc[df_para_ps[df_para_ps['YEAR']==1995].index.tolist()[0]]['VALUE']
+                growth = df_w.iloc[df_w[(df_w['PARAMETER']==p)&(df_w['TECHNOLOGY']==t)].index.tolist()[0]]['VALUE']
+                for y in dic_yrs[dp]['VALUE']:
+                    value = last_value_ps * (1+growth)**(y-last_yr_ps)
+                    df_out = df_out.append(pd.DataFrame([[p,r,t,df_w['OPTION'].unique()[0],y,value]],columns=col),ignore_index=True)
+                    print(value)
     return
