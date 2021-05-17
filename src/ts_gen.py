@@ -32,4 +32,4 @@ def main(df,dic_yrs,path_data,step,dp):
                     value = last_value_ps * (1+growth)**(y-last_yr_ps)
                     df_out = df_out.append(pd.DataFrame([[p,r,t,df_w['OPTION'].unique()[0],y,value]],columns=col),ignore_index=True)
                     print(value)
-    return
+    return df_out
