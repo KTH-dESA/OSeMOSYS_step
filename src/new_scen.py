@@ -1,4 +1,4 @@
-"This script modify a OSeMOSYS datapackage based on a provided one changing provided parameter"
+"This script modifies an OSeMOSYS datapackage based on a provided one changing provided parameter"
 #%% Import needed packages
 import pandas as pd
 import os
