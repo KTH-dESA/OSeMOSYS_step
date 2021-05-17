@@ -6,12 +6,12 @@ import main_ms as mm #for testing
 #%% Main function
 "The main function receives the dataframe with the parameter information that should go into a datapackage..."
 def main(df,dic_yrs,path_data,step,dp):
-    df = mm.get_scen('../data/scenarios/')[2]['E'] #for testing
-    df = df[df['OPTION']==0]
-    dic_yrs = {0: pd.DataFrame({'VALUE': [1990,1991]}), 1: pd.DataFrame({'VALUE': [1991,1992,1993,1994,1995,1996,1997,1998,1999,2000]}), 2: pd.DataFrame({'VALUE': [1996,1997,1998,1999,2000,2001,2002,2003,2004,2005]})} #for testing
-    path_data = '../data/step2/C0E0/C0' #for testing
-    step = 2 #for testing
-    dp = 2 #for testing
+    # df = mm.get_scen('../data/scenarios/')[2]['E'] #for testing
+    # df = df[df['OPTION']==0]
+    # dic_yrs = {0: pd.DataFrame({'VALUE': [1990,1991]}), 1: pd.DataFrame({'VALUE': [1991,1992,1993,1994,1995,1996,1997,1998,1999,2000]}), 2: pd.DataFrame({'VALUE': [1996,1997,1998,1999,2000,2001,2002,2003,2004,2005]})} #for testing
+    # path_data = '../data/step2/C0E0/C0' #for testing
+    # step = 2 #for testing
+    # dp = 2 #for testing
     if step==0:
         sys.exit('It seems you provided a growth rate for a decision parameter in step 0. This is not possible since no previous value for the parameter is available. Please indicate the options for the decision parameter in step 0 with time series.')
     scens = '/'.join(path_data.split('/')[3:-1])
