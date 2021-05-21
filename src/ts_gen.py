@@ -25,8 +25,8 @@ def main(df,dic_yrs,path_data,step,dp):
             for t in df_w[df_w.columns[2]].unique():
                 df_para_ps = pd.read_csv(path_data_ps+'/'+p+'.csv')
                 if len(df_para_ps)==0:
-                    sys.exit('Seems like you are providng a growth rate for a parameter that has not been defined before. For parameter that have not been defined before, please provide in the first step where the paremter is to be defined time series.')
                 last_value_ps = df_para_ps.iloc[df_para_ps[df_para_ps['YEAR']==1995].index.tolist()[0]]['VALUE']
+                    sys.exit('Seems like you are providng a growth rate for a parameter that has not been defined before. For parameter that have not been defined before, please provide in the first step where the paremter is to be defined a time series.')
                 growth = df_w.iloc[df_w[(df_w['PARAMETER']==p)&(df_w[df_w.columns[2]]==t)].index.tolist()[0]]['VALUE']
                 for y in dic_yrs[dp]['VALUE']:
                     value = last_value_ps * (1+growth)**(y-last_yr_ps)
