@@ -2,7 +2,7 @@
 #%% Import of required packages
 import pandas as pd
 import sys
-import main_ms as mm #for testing
+#import main_ms as mm #for testing
 #%% Main function
 "The main function receives the dataframe with the parameter information that should go into a datapackage..."
 def main(df,dic_yrs,path_data,step,dp):
@@ -22,7 +22,6 @@ def main(df,dic_yrs,path_data,step,dp):
         path_data_ps = '../data/step%(step)s/%(scens)s/datapackage%(dp_p)s/data' % {'step': step, 'scens': scens, 'dp_p': dp-1}
     last_yr_ps = dic_yrs[dp]['VALUE'].min()-1
     df_w = df[df['YEAR'].isnull()]
-    print(df_w)
     col = list(df_w.columns)
     df_out = pd.DataFrame(columns=col)
     for p in df_w['PARAMETER'].unique():

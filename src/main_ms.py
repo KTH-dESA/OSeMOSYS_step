@@ -156,7 +156,7 @@ def main(data_path,step_length,param_path,solver=None):
     # param_path = '../data/scenarios/' #for testing
     # data_path = '../data/utopia.txt' #for testing
     # step_length = [1,5] #for testing
-    solver=None #for testing
+    #solver=None #for testing
     if type(step_length)==int:
         dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
         all_steps = len(dic_yr_in_steps)

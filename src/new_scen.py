@@ -3,7 +3,7 @@
 import pandas as pd
 import os
 import ts_gen as tg
-import main_ms as mm #for testing
+#import main_ms as mm #for testing
 #%% Main function to coordinate the script
 def main(path_data,step,dic_dec,dic_scen_dec,dic_yrs):
     # path_data = '../data/step2/C0E0/C0' #for testing
