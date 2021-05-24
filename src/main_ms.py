@@ -10,6 +10,8 @@ import step_to_final as stf
 import results_to_next_step as rtns
 import new_scen as ns
 import solv as sl
+import click
+
 #%% Function to derive scenario information from provided folders and files
 def get_scen(path):
     #path = '../data/scenarios/' #for testing
@@ -152,6 +154,12 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
                 shutil.copytree(src,dest)
 #%% Main function to coordinate the script
 "The main function of main_ms takes always three inputs and can take the optional input solver. The three needed inputs are the path to the datafile of the model, the step length - either an integer in case the step length is always the same or a list of two integers, the first indicating the length of the first step and the second of the remaining steps - and the path to the folder with the csv files containing the data for the parameter to varied between scenarios. The solver can be indicate in the following way 'solver=gurobi'"
+# inteact with command prompt or terminal to get all needed input
+@click.command()
+@click.option("--input_data", required=True, help="The path to the input datafile. relative from the repo folder, e.g. '../data/utopia.txt'")
+@click.option("--step_length", required=True, help="Either an integer, e.g. '5' for five year steps, or a list of two integers when the first step is supposed to be of a different length, e.g. '[1,5]' if the first step shall be one year and all following five years.")
+@click.option("--path_param", required=True, help="Indicate the path to the directory that contains the folder with the csv files for the decisions between the steps. E.g. like '../data/scenarios/'")
+@click.option("--solver", default=None, help="If another solver than 'glpk' is desired please indicate the solver. [gurobi]")
 def main(data_path,step_length,param_path,solver=None):
     # param_path = '../data/scenarios/' #for testing
     # data_path = '../data/utopia.txt' #for testing
@@ -322,7 +330,7 @@ def main(data_path,step_length,param_path,solver=None):
                                 stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[1]])
 #%% If run as script
 if __name__ == '__main__':
-    path_param = '../data/scenarios/'
-    path_data = '../data/utopia.txt'
-    step_length = [1,5]
-    main(path_data,step_length,path_param,solver='gurobi')
+    # path_param = '../data/scenarios/' # for testing
+    # input_data = '../data/utopia.txt' # for testing
+    # step_length = [1,5] # for testing
+    main()#input_data,step_length,path_param,solver)
