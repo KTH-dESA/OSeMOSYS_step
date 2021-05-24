@@ -156,19 +156,20 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
 "The main function of main_ms takes always three inputs and can take the optional input solver. The three needed inputs are the path to the datafile of the model, the step length - either an integer in case the step length is always the same or a list of two integers, the first indicating the length of the first step and the second of the remaining steps - and the path to the folder with the csv files containing the data for the parameter to varied between scenarios. The solver can be indicate in the following way 'solver=gurobi'"
 # inteact with command prompt or terminal to get all needed input
 @click.command()
-@click.option("--input_data", required=True, help="The path to the input datafile. relative from the repo folder, e.g. '../data/utopia.txt'")
-@click.option("--step_length", required=True, help="Either an integer, e.g. '5' for five year steps, or a list of two integers when the first step is supposed to be of a different length, e.g. '[1,5]' if the first step shall be one year and all following five years.")
-@click.option("--path_param", required=True, help="Indicate the path to the directory that contains the folder with the csv files for the decisions between the steps. E.g. like '../data/scenarios/'")
+@click.option("--step_length", required=True, multiple=True, help="Provide an integer to indicate the step length, e.g. '5' for five year steps. One can provide the parameter also twice, for example if the first step shall be one year and all following five years one would enter '--step_length 1 --step_length 5'")
 @click.option("--solver", default=None, help="If another solver than 'glpk' is desired please indicate the solver. [gurobi]")
-def main(data_path,step_length,param_path,solver=None):
-    # param_path = '../data/scenarios/' #for testing
-    # data_path = '../data/utopia.txt' #for testing
+@click.option("--input_data", default= '../data/utopia.txt', help="The path to the input datafile. relative from the src folder, e.g. '../data/utopia.txt'")
+@click.option("--path_param", default='../data/scenarios/', help="Indicate the path to the directory that contains the folder with the csv files for the decisions between the steps. E.g. like '../data/scenarios/'")
+def main(input_data,step_length,path_param,solver=None):
+    # path_param = '../data/scenarios/' #for testing
+    # input_data = '../data/utopia.txt' #for testing
     # step_length = [1,5] #for testing
     #solver=None #for testing
-    if type(step_length)==int:
-        dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
+    if len(step_length)<2:
+        step_length = int(step_length[0])
+        dic_yr_in_steps, full_steps = ds.split_dp(input_data,step_length)
         all_steps = len(dic_yr_in_steps)
-        dec_dic = get_scen(param_path) #Create dictionary for stages with decisions creating new scenarios
+        dec_dic = get_scen(path_param) #Create dictionary for stages with decisions creating new scenarios
         dic_step_paths = step_directories('../data',all_steps)
         dic_scen = scen_dic(dec_dic,all_steps)
         dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
@@ -247,9 +248,13 @@ def main(data_path,step_length,param_path,solver=None):
                             else:
                                 stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
     else:
-        dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
+        step_length_tp = step_length
+        step_length = []
+        for l in step_length_tp:
+            step_length.append(int(l))
+        dic_yr_in_steps, full_steps = ds.split_dp(input_data,step_length)
         all_steps = len(dic_yr_in_steps)
-        dec_dic = get_scen(param_path) #Create dictionary for stages with decisions creating new scenarios
+        dec_dic = get_scen(path_param) #Create dictionary for stages with decisions creating new scenarios
         dic_step_paths = step_directories('../data',all_steps)
         dic_scen = scen_dic(dec_dic,all_steps)
         dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
