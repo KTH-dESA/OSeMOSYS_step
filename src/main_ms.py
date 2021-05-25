@@ -1,5 +1,6 @@
 "This script is the main script for running multi-scenario (ms) multi-stage OSeMOSYS models"
 #%% Import required packages
+from os.path import dirname
 import pandas as pd
 import os
 import itertools
@@ -159,12 +160,15 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
 @click.option("--step_length", required=True, multiple=True, help="Provide an integer to indicate the step length, e.g. '5' for five year steps. One can provide the parameter also twice, for example if the first step shall be one year and all following five years one would enter '--step_length 1 --step_length 5'")
 @click.option("--input_data", required=True, default= '../data/utopia.txt', help="The path to the input datafile. relative from the src folder, e.g. '../data/utopia.txt'")
 @click.option("--solver", default=None, help="If another solver than 'glpk' is desired please indicate the solver. [gurobi]")
-@click.option("--path_param", default='../data/scenarios/', help="Indicate the path to the directory that contains the folder with the csv files for the decisions between the steps. E.g. like '../data/scenarios/'")
+@click.option("--path_param", default=None, help="If the scenario data for the decisions between the steps is safed elsewhere than '../data/scenarios/' on can use this option to indicate the path.")
 def main(input_data,step_length,path_param,solver=None):
     # path_param = '../data/scenarios/' #for testing
     # input_data = '../data/utopia.txt' #for testing
     # step_length = [1,5] #for testing
     #solver=None #for testing
+    if path_param==None:
+        dir_name = os.path.dirname(__file__)
+        path_param = '/'.join(dir_name.split('/')[:-1]) + '/data/scenarios/'
     if len(step_length)<2:
         step_length = int(step_length[0])
         dic_yr_in_steps, full_steps = ds.split_dp(input_data,step_length)
