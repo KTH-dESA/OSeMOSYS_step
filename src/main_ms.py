@@ -157,8 +157,8 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
 # inteact with command prompt or terminal to get all needed input
 @click.command()
 @click.option("--step_length", required=True, multiple=True, help="Provide an integer to indicate the step length, e.g. '5' for five year steps. One can provide the parameter also twice, for example if the first step shall be one year and all following five years one would enter '--step_length 1 --step_length 5'")
+@click.option("--input_data", required=True, default= '../data/utopia.txt', help="The path to the input datafile. relative from the src folder, e.g. '../data/utopia.txt'")
 @click.option("--solver", default=None, help="If another solver than 'glpk' is desired please indicate the solver. [gurobi]")
-@click.option("--input_data", default= '../data/utopia.txt', help="The path to the input datafile. relative from the src folder, e.g. '../data/utopia.txt'")
 @click.option("--path_param", default='../data/scenarios/', help="Indicate the path to the directory that contains the folder with the csv files for the decisions between the steps. E.g. like '../data/scenarios/'")
 def main(input_data,step_length,path_param,solver=None):
     # path_param = '../data/scenarios/' #for testing
