@@ -167,7 +167,7 @@ def main(input_data,step_length,path_param,solver=None):
     # step_length = [1,5] #for testing
     #solver=None #for testing
     if path_param==None:
-        dir_name = os.path.dirname(__file__)
+        dir_name = os.getcwd()
         path_param = '/'.join(dir_name.split('/')[:-1]) + '/data/scenarios/'
     if len(step_length)<2:
         step_length = int(step_length[0])
