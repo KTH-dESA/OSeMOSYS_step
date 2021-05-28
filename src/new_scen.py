@@ -22,18 +22,19 @@ def main(path_data,step,dic_dec,dic_scen_dec,dic_yrs):
                 if len(df_in['YEAR'][df_in['YEAR'].isnull()])>0:
                     df_in = tg.main(df_in,dic_yrs,path_data,step,dp)
                 df_in = df_in[df_in['YEAR'].isin(dic_yrs[dp]['VALUE'])]
+                print(df_in.head()) #for testing
                 if df.empty:
                     df_in = df_in[list(df.columns)]
                     df = df.append(df_in)
                 else:
                     df_new = df
-                    for t in df_in['TECHNOLOGY'].unique():
-                        df_t = df[df['TECHNOLOGY']==t]
+                    for t in df_in[df_in.columns[2]].unique():
+                        df_t = df[df[df_in.columns[2]]==t]
                         df_in_ex = df_in[df_in['YEAR'].isin(df_t['YEAR'].unique())]
-                        df_in_ex = df_in_ex[df_in_ex['TECHNOLOGY']==t]
+                        df_in_ex = df_in_ex[df_in_ex[df_in.columns[2]]==t]
                         df_in_ex = df_in_ex.set_index(df_t.index)
                         df_new.update(df_in_ex)
-                        df_in_new = df_in[(df_in['TECHNOLOGY']==t)&(~df_in['YEAR'].isin(df_in_ex['YEAR'].unique()))]
+                        df_in_new = df_in[(df_in[df_in.columns[2]]==t)&(~df_in['YEAR'].isin(df_in_ex['YEAR'].unique()))]
                         df_new = df_new.append(df_in_new, ignore_index=True)
                     df_new = df_new.drop(columns=['PARAMETER','OPTION'])
                     df = df_new
