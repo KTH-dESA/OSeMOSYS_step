@@ -1,5 +1,6 @@
 "This script is the main script for running multi-scenario (ms) multi-stage OSeMOSYS models"
 #%% Import required packages
+from os.path import dirname
 import pandas as pd
 import os
 import itertools
@@ -10,6 +11,8 @@ import step_to_final as stf
 import results_to_next_step as rtns
 import new_scen as ns
 import solv as sl
+import click
+
 #%% Function to derive scenario information from provided folders and files
 def get_scen(path):
     #path = '../data/scenarios/' #for testing
@@ -152,15 +155,25 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
                 shutil.copytree(src,dest)
 #%% Main function to coordinate the script
 "The main function of main_ms takes always three inputs and can take the optional input solver. The three needed inputs are the path to the datafile of the model, the step length - either an integer in case the step length is always the same or a list of two integers, the first indicating the length of the first step and the second of the remaining steps - and the path to the folder with the csv files containing the data for the parameter to varied between scenarios. The solver can be indicate in the following way 'solver=gurobi'"
-def main(data_path,step_length,param_path,solver=None):
-    # param_path = '../data/scenarios/' #for testing
-    # data_path = '../data/utopia.txt' #for testing
+# inteact with command prompt or terminal to get all needed input
+@click.command()
+@click.option("--step_length", required=True, multiple=True, help="Provide an integer to indicate the step length, e.g. '5' for five year steps. One can provide the parameter also twice, for example if the first step shall be one year and all following five years one would enter '--step_length 1 --step_length 5'")
+@click.option("--input_data", required=True, default= '../data/utopia.txt', help="The path to the input datafile. relative from the src folder, e.g. '../data/utopia.txt'")
+@click.option("--solver", default=None, help="If another solver than 'glpk' is desired please indicate the solver. [gurobi]")
+@click.option("--path_param", default=None, help="If the scenario data for the decisions between the steps is safed elsewhere than '../data/scenarios/' on can use this option to indicate the path.")
+def main(input_data,step_length,path_param,solver=None):
+    # path_param = '../data/scenarios/' #for testing
+    # input_data = '../data/utopia.txt' #for testing
     # step_length = [1,5] #for testing
     #solver=None #for testing
-    if type(step_length)==int:
-        dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
+    if path_param==None:
+        dir_name = os.getcwd()
+        path_param = '/'.join(dir_name.split('/')[:-1]) + '/data/scenarios/'
+    if len(step_length)<2:
+        step_length = int(step_length[0])
+        dic_yr_in_steps, full_steps = ds.split_dp(input_data,step_length)
         all_steps = len(dic_yr_in_steps)
-        dec_dic = get_scen(param_path) #Create dictionary for stages with decisions creating new scenarios
+        dec_dic = get_scen(path_param) #Create dictionary for stages with decisions creating new scenarios
         dic_step_paths = step_directories('../data',all_steps)
         dic_scen = scen_dic(dec_dic,all_steps)
         dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
@@ -239,9 +252,13 @@ def main(data_path,step_length,param_path,solver=None):
                             else:
                                 stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
     else:
-        dic_yr_in_steps, full_steps = ds.split_dp(data_path,step_length)
+        step_length_tp = step_length
+        step_length = []
+        for l in step_length_tp:
+            step_length.append(int(l))
+        dic_yr_in_steps, full_steps = ds.split_dp(input_data,step_length)
         all_steps = len(dic_yr_in_steps)
-        dec_dic = get_scen(param_path) #Create dictionary for stages with decisions creating new scenarios
+        dec_dic = get_scen(path_param) #Create dictionary for stages with decisions creating new scenarios
         dic_step_paths = step_directories('../data',all_steps)
         dic_scen = scen_dic(dec_dic,all_steps)
         dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
@@ -322,7 +339,7 @@ def main(data_path,step_length,param_path,solver=None):
                                 stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[1]])
 #%% If run as script
 if __name__ == '__main__':
-    path_param = '../data/scenarios/'
-    path_data = '../data/utopia.txt'
-    step_length = [1,5]
-    main(path_data,step_length,path_param,solver='gurobi')
+    # path_param = '../data/scenarios/' # for testing
+    # input_data = '../data/utopia.txt' # for testing
+    # step_length = [1,5] # for testing
+    main() #input_data,step_length,path_param,solver)
