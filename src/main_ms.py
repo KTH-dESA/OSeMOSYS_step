@@ -195,7 +195,7 @@ def main(input_data,step_length,path_param,solver=None):
                             sl.main(solver,path_df,path_res_step)
                         else:
                             ms.run_df(path_df,path_res_step)
-                        if not os.listdir(path_res_step):
+                        if not os.listdir(path_res_step): #if scenario run failed, this removes following dependent scnearios
                             for z in range(s+1,len(dic_scen_paths)):
                                 for x in range(len(dic_scen_paths[z])):
                                     if dic_scen_paths[z][x].split('/')[3] == dic_scen_paths[s][sce].split('/')[-1]:
