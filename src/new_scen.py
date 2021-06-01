@@ -22,7 +22,6 @@ def main(path_data,step,dic_dec,dic_scen_dec,dic_yrs):
                 if len(df_in['YEAR'][df_in['YEAR'].isnull()])>0:
                     df_in = tg.main(df_in,dic_yrs,path_data,step,dp)
                 df_in = df_in[df_in['YEAR'].isin(dic_yrs[dp]['VALUE'])]
-                print(df_in.head()) #for testing
                 if df.empty:
                     df_in = df_in[list(df.columns)]
                     df = df.append(df_in)
