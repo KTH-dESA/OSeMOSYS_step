@@ -10,6 +10,8 @@ def ts_rate(rate,yr,init,yr0):
 #%% Create time series using an absolute value for annual change
 def ts_abs(rate,yr,init,yr0):
     value =init + rate * (yr-yr0)
+    if value<0:
+        value = 0
     return value
 #%% Main function
 "The main function receives the dataframe with the parameter information that should go into a datapackage..."
