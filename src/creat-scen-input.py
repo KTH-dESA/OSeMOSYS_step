@@ -18,15 +18,15 @@ def gen_yrs(start_yr,end_yr):
     for y in range(start_yr,end_yr+1):
         yrs = yrs.append(pd.Series([y]),ignore_index=True)
     return yrs
-#%%
-def generate_scen_df(df_techs,param,reg,ys,dic_opt):
-    df = pd.DataFrame([],columns=['PARAMETER','REGION','TECHNOLOGY','OPTION','YEAR','VALUE'])
+#%% create df with options for decision
+def generate_scen_df(col,df_techs,param,reg,ys,dic_opt):
+    df = pd.DataFrame([],columns=col)
     for r in reg:
-        df_r = pd.DataFrame([],columns=['PARAMETER','REGION','TECHNOLOGY','OPTION','YEAR','VALUE'])
+        df_r = pd.DataFrame([],columns=col)
         for o in dic_opt:
-            df_o = pd.DataFrame([],columns=['PARAMETER','REGION','TECHNOLOGY','OPTION','YEAR','VALUE'])
+            df_o = pd.DataFrame([],columns=col)
             for t in df_techs:
-                df_t = pd.DataFrame([],columns=['PARAMETER','REGION','TECHNOLOGY','OPTION','YEAR','VALUE'])
+                df_t = pd.DataFrame([],columns=col)
                 df_t['YEAR'] = ys
                 df_t['PARAMETER'] = param
                 df_t['REGION'] = r
@@ -38,21 +38,22 @@ def generate_scen_df(df_techs,param,reg,ys,dic_opt):
         df = df.append(df_r,ignore_index=True)
     return df
 #%% Main function
-def main(param,tec_path,tec_filter,regs,yr_s,yr_e,dic_ops):
-    #tec_path = '../../OSeMBE_dev/input_data/REF/data/TECHNOLOGY.csv' #for testing
-    #tec_filter = 'CS' #for testing
+def main(param,cols,tec_path,tec_filter,regs,yr_s,yr_e,dic_ops,path_csv):
     techs = get_techs(tec_path)
     techs_selec = filter_tec(techs,tec_filter)
     years = gen_yrs(yr_s,yr_e)
-    df = generate_scen_df(techs_selec,param,regs,years,dic_ops)
+    df = generate_scen_df(cols,techs_selec,param,regs,years,dic_ops)
+    df.to_csv(path_csv,index=False)
     return df
 #%%
 if __name__ == '__main__':
     tech_path = '../../OSeMBE_dev/input_data/REF/data/TECHNOLOGY.csv'
+    columns = ['PARAMETER','REGION','TECHNOLOGY','OPTION','YEAR','VALUE']
     tech_filter = 'CS'
     regions = ['REGION1']
     parameter = 'TotalAnnualMaxCapacityInvestment'
     year_start = 2021
     year_end = 2060
     dict_options = {'0': 0, '1': 99999}
-    tec = main(parameter,tech_path,tech_filter,regions,year_start,year_end,dict_options)
+    path_out = '../../OSeMBE_dev/input_data/REF/scenarios/1/C.csv'
+    tec = main(parameter,columns,tech_path,tech_filter,regions,year_start,year_end,dict_options,path_out)
