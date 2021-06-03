@@ -19,18 +19,33 @@ def gen_yrs(start_yr,end_yr):
         yrs = yrs.append(pd.Series([y]),ignore_index=True)
     return yrs
 #%%
-def generate_scen_df(df_techs,param,reg,years,dic_opt):
-
+def generate_scen_df(df_techs,param,reg,ys,dic_opt):
+    df = pd.DataFrame([],columns=['PARAMETER','REGION','TECHNOLOGY','OPTION','YEAR','VALUE'])
+    for r in reg:
+        df_r = pd.DataFrame([],columns=['PARAMETER','REGION','TECHNOLOGY','OPTION','YEAR','VALUE'])
+        for o in dic_opt:
+            df_o = pd.DataFrame([],columns=['PARAMETER','REGION','TECHNOLOGY','OPTION','YEAR','VALUE'])
+            for t in df_techs:
+                df_t = pd.DataFrame([],columns=['PARAMETER','REGION','TECHNOLOGY','OPTION','YEAR','VALUE'])
+                df_t['YEAR'] = ys
+                df_t['PARAMETER'] = param
+                df_t['REGION'] = r
+                df_t['TECHNOLOGY'] = t
+                df_t['OPTION'] = o
+                df_t['VALUE'] = dic_opt[o]
+                df_o = df_o.append(df_t, ignore_index=True)
+            df_r = df_r.append(df_o, ignore_index=True)
+        df = df.append(df_r,ignore_index=True)
     return df
 #%% Main function
-def main(tec_path,tec_filter,regs,yr_s,yr_e,dic_ops):
+def main(param,tec_path,tec_filter,regs,yr_s,yr_e,dic_ops):
     #tec_path = '../../OSeMBE_dev/input_data/REF/data/TECHNOLOGY.csv' #for testing
     #tec_filter = 'CS' #for testing
     techs = get_techs(tec_path)
     techs_selec = filter_tec(techs,tec_filter)
     years = gen_yrs(yr_s,yr_e)
-    
-    return years
+    df = generate_scen_df(techs_selec,param,regs,years,dic_ops)
+    return df
 #%%
 if __name__ == '__main__':
     tech_path = '../../OSeMBE_dev/input_data/REF/data/TECHNOLOGY.csv'
@@ -40,4 +55,4 @@ if __name__ == '__main__':
     year_start = 2021
     year_end = 2060
     dict_options = {'0': 0, '1': 99999}
-    tec = main(tech_path,tech_filter,regions,year_start,year_end,dict_options)
+    tec = main(parameter,tech_path,tech_filter,regions,year_start,year_end,dict_options)
