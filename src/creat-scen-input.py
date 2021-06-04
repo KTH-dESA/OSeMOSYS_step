@@ -5,11 +5,12 @@ def get_techs(path):
     df = pd.read_csv(path)
     return df
 #%% Filter technologies to needed ones
-def filter_tec(df,token):
+def filter_tec(df,token,token2):
     #df = techs #for testing
     #token = 'CS' #for testing
-    df['TECHNOLOGY'] = df['VALUE'].str.slice(start=4,stop=6)
-    df_new = df[df['TECHNOLOGY'].str.contains(token)]
+    df['TECHNOLOGY'] = df['VALUE'].str.slice(start=2,stop=4)
+    df['LEVEL'] = df['VALUE'].str.slice(start=6,stop=7)
+    df_new = df[(df['TECHNOLOGY'].str.contains(token))&(df['LEVEL'].str.contains(token2))]
     df_new = df_new['VALUE'].reset_index(drop=True)
     return df_new
 #%% create series for years
@@ -38,9 +39,9 @@ def generate_scen_df(col,df_techs,param,reg,ys,dic_opt):
         df = df.append(df_r,ignore_index=True)
     return df
 #%% Main function
-def main(param,cols,tec_path,tec_filter,regs,yr_s,yr_e,dic_ops,path_csv):
+def main(param,cols,tec_path,tec_filter,lev_filter,regs,yr_s,yr_e,dic_ops,path_csv):
     techs = get_techs(tec_path)
-    techs_selec = filter_tec(techs,tec_filter)
+    techs_selec = filter_tec(techs,tec_filter,lev_filter)
     years = gen_yrs(yr_s,yr_e)
     df = generate_scen_df(cols,techs_selec,param,regs,years,dic_ops)
     df.to_csv(path_csv,index=False)
@@ -49,11 +50,12 @@ def main(param,cols,tec_path,tec_filter,regs,yr_s,yr_e,dic_ops,path_csv):
 if __name__ == '__main__':
     tech_path = '../../OSeMBE_dev/input_data/REF/data/TECHNOLOGY.csv'
     columns = ['PARAMETER','REGION','TECHNOLOGY','OPTION','YEAR','VALUE']
-    tech_filter = 'CS'
+    tech_filter = 'BM'
+    level_filter = 'I'
     regions = ['REGION1']
     parameter = 'TotalAnnualMaxCapacityInvestment'
-    year_start = 2021
+    year_start = 2041
     year_end = 2060
     dict_options = {'0': 0, '1': 99999}
-    path_out = '../../OSeMBE_dev/input_data/REF/scenarios/1/C.csv'
-    tec = main(parameter,columns,tech_path,tech_filter,regions,year_start,year_end,dict_options,path_out)
+    path_out = '../../OSeMBE_dev/input_data/REF/scenarios/3/B.csv'
+    tec = main(parameter,columns,tech_path,tech_filter,level_filter,regions,year_start,year_end,dict_options,path_out)
