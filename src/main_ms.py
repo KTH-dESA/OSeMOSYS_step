@@ -168,7 +168,7 @@ def main(input_data,step_length,path_param,solver=None):
     #solver=None #for testing
     if path_param==None:
         dir_name = os.getcwd()
-        path_param = '/'.join(dir_name.split('/')[:-1]) + '/data/scenarios/'
+        path_param = os.path.join(os.sep.join(dir_name.split(os.sep)[:-1]),'data','scenarios')
     if len(step_length)<2:
         step_length = int(step_length[0])
         dic_yr_in_steps, full_steps = ds.split_dp(input_data,step_length)
