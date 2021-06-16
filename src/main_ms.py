@@ -230,7 +230,7 @@ def main(input_data,step_length,path_param,solver=None):
                                 else:
                                     stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length])
                             i += 1
-                        shutil.rmtree(dic_fin_res_path[s-1][sce]+'res')
+                        shutil.rmtree(os.path.join(dic_fin_res_path[s-1][sce],'res'))
                     else:
                         if dic_scen_paths[s][sce] != 'none':
                             path_dp_d = os.path.join(paths_dp_step[sce],'data')
@@ -247,7 +247,7 @@ def main(input_data,step_length,path_param,solver=None):
                                     for z in range(s+1,len(dic_scen_paths)):
                                         for x in range(len(dic_scen_paths[z])):
                                             if dic_scen_paths[z][x]!='none':
-                                                if dic_scen_paths[z][x].split(os.sep)[p] == dic_scen_paths[s][sce].split('/')[-1]:
+                                                if dic_scen_paths[z][x].split(os.sep)[p] == dic_scen_paths[s][sce].split(os.sep)[-1]:
                                                     dic_scen_paths[z][x] = 'none'
                             else:
                                 stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
