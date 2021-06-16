@@ -23,13 +23,13 @@ def run_df(path,results_path):
         os.mkdir(results_path)
     except OSError:
         print("Creation of the directory %s failed" %results_path)
-    with open('../model/osemosys.txt', 'r') as file:
+    with open(os.path.join('..','model','osemosys.txt'), 'r') as file:
         model = file.readlines()
     rp = "param ResultsPath, symbolic default '"+results_path+"';\n"
     model[55] = rp
-    with open('../model/osemosys.txt', 'w') as file:
+    with open(os.path.join('..','model','osemosys.txt'), 'w') as file:
         file.writelines(model)
-    cd_run = 'glpsol -m ../model/osemosys.txt -d %(data)s --log %(log)s' % {'data': path, 'log': results_path+'.log'}
+    cd_run = 'glpsol -m '+os.path.join('..','model','osemosys.txt')+' -d %(data)s --log %(log)s' % {'data': path, 'log': results_path+'.log'}
     sp.run([cd_run],shell=True,capture_output=True)
     return results_path
 #%% Main function to coordinate the execution of the script

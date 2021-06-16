@@ -2,14 +2,15 @@
 #%% Import needed packages
 import pandas as pd
 import sys
+import os
 #%% Main function to coordinate the script
 def main(dp_path,fr_path):
     #dp_path = '../data/datapackage1/data' #for testing
     #fr_path = '../results' #for testing
-    rc_path = dp_path +'/ResidualCapacity.csv'
-    ol_path = dp_path +'/OperationalLife.csv'
-    nc_path = fr_path +'/res/NewCapacity.csv'
-    yr_path = dp_path +'/YEAR.csv'
+    rc_path = os.path.join(dp_path,'ResidualCapacity.csv')
+    ol_path = os.path.join(dp_path,'OperationalLife.csv')
+    nc_path = os.path.join(fr_path,'res','NewCapacity.csv')
+    yr_path = os.path.join(dp_path,'YEAR.csv')
     df_init = pd.read_csv(rc_path)
     df_ol = pd.read_csv(ol_path)
     df_nc = pd.read_csv(nc_path)
