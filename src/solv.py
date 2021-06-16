@@ -15,9 +15,9 @@ def create_res_dir(path_res):
     return
 #%% Function to create lp file
 def create_lp(path_df):
-    name_lp = path_df.split('/')[-1].split('.')[0] + '.lp'
-    path_lp = '/'.join(path_df.split('/')[:-1]) + '/' + name_lp
-    str_cmd = 'glpsol -m ../model/osemosys.txt -d %(data)s --wlp %(lp)s --check' % {'data': path_df, 'lp': path_lp}
+    name_lp = path_df.split(os.sep)[-1].split('.')[0] + '.lp'
+    path_lp = os.path.join(os.sep.join(path_df.split(os.sep)[:-1]),name_lp)
+    str_cmd = 'glpsol -m '+os.path.join('..','model','osemosys.txt')+ ' -d %(data)s --wlp %(lp)s --check' % {'data': path_df, 'lp': path_lp}
     sp.run([str_cmd],shell=True,capture_output=True)
     return path_lp
 #%% Function to solve lp file using gurobi
