@@ -17,8 +17,8 @@ def create_res_dir(path_res):
 def create_lp(path_df):
     name_lp = path_df.split(os.sep)[-1].split('.')[0] + '.lp'
     path_lp = os.path.join(os.sep.join(path_df.split(os.sep)[:-1]),name_lp)
-    str_cmd = 'glpsol -m '+os.path.join('..','model','osemosys.txt')+ ' -d %(data)s --wlp %(lp)s --check' % {'data': path_df, 'lp': path_lp}
-    sp.run([str_cmd],shell=True,capture_output=True)
+    str_cmd = 'glpsol -m '+os.path.join('"..','model','osemosys.txt"')+ ' -d "%(data)s" --wlp "%(lp)s" --check' % {'data': path_df, 'lp': path_lp}
+    sp.run(str_cmd,shell=True,capture_output=True)
     return path_lp
 #%% Function to solve lp file using gurobi
 def sol_gurobi(path_lp,path_res):
@@ -26,8 +26,8 @@ def sol_gurobi(path_lp,path_res):
     # path_res = '../steps/step2/C0E0/C1' #for testing
     path_issue = path_res + '.ilp'
     path_sol = path_res + '.sol'
-    str_cmd = 'gurobi_cl ResultFile=%(issue)s ResultFile=%(solution)s %(lp)s' % {'issue': path_issue,'solution': path_sol,'lp': path_lp}
-    sp.run([str_cmd],shell=True,capture_output=True)
+    str_cmd = 'gurobi_cl ResultFile=%(issue)s ResultFile=%(solution)s "%(lp)s"' % {'issue': path_issue,'solution': path_sol,'lp': path_lp}
+    sp.run(str_cmd,shell=True,capture_output=True)
     if os.path.exists(path_res+'.ilp'):
         path_sol = None
     if os.path.exists(path_lp):
