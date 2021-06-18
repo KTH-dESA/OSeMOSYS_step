@@ -3,6 +3,7 @@
 import os
 import subprocess as sp
 from otoole import ReadGurobi
+from otoole import ReadDatafile
 from otoole import WriteCsv
 from otoole import Context
 #%% Create directory for results
@@ -43,11 +44,14 @@ def sol_cplex(path_lp):
     return path_sol
 #%% 
 "Function to convert gurobi sol file to csvs"
-def csv_gurobi(path_sol,path_res):
+def csv_gurobi(path_sol,path_res,p_df):
+    #path_sol = '../data/step0.sol' #for testing
+    #path_res = '../data/res' #for testing
     reader = ReadGurobi()
     writer = WriteCsv()
+    input_data, _ = ReadDatafile().read(p_df)
     converter = Context(read_strategy=reader,write_strategy=writer)
-    converter.convert(path_sol,path_res)
+    converter.convert(path_sol,path_res,input_data=input_data)
     if os.path.exists(path_sol):
         os.remove(path_sol)
 #%% main function
@@ -60,6 +64,6 @@ def main(solver,path_df,path_res):
     if solver == 'gurobi':
         path_sol = sol_gurobi(path_lp,path_res)
         if path_sol != None:
-            csv_gurobi(path_sol,path_res)
+            csv_gurobi(path_sol,path_res,path_df)
 #%% If run as script
 #if __name__ == '__main__':
