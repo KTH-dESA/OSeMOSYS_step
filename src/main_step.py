@@ -13,6 +13,7 @@ import results_to_next_step as rtns
 #%% Convert datapackage to datafile
 def dp_to_df(dp_path,df_path):
     # otoole datapackage to datafile
+    dp_path = os.path.join(dp_path,'datapackage.json')
     reader = ReadDatapackage()
     writer = WriteDatafile()
     converter = Context(read_strategy=reader, write_strategy=writer)
