@@ -26,10 +26,10 @@ def main(df,dic_yrs,path_data,step,dp):
     if step==0:
         sys.exit('It seems you provided a change rate for a decision parameter in step 0. This is not possible since no previous value for the parameter is available. Please indicate the options for the decision parameter in step 0 with time series.')
     if dp == step:
-        scens = '/'.join(path_data.split('/')[3:-1])
+        scens = os.sep.join(path_data.split(os.sep)[3:-1])
         path_data_ps = '../data/step%(step)s/%(scens)s/datapackage%(dp_p)s/data' % {'step': step-1, 'scens': scens, 'dp_p': dp-1}
     else:
-        scens = '/'.join(path_data.split('/')[3:])
+        scens = os.sep.join(path_data.split(os.sep)[3:])
         path_data_ps = '../data/step%(step)s/%(scens)s/datapackage%(dp_p)s/data' % {'step': step, 'scens': scens, 'dp_p': dp-1}
     last_yr_ps = dic_yrs[dp]['VALUE'].min()-1
     df_w = df[df['YEAR'].isnull()]
