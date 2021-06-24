@@ -27,8 +27,11 @@ def main(dp_path,fr_path):
                 ol = df_ol.loc[df_ol.loc[df_ol['TECHNOLOGY']==t].index[0],'VALUE']
                 df = df[df['YEAR']>(y-ol)]
                 if t in df_init['TECHNOLOGY'].unique():
-                    i = df_out.loc[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)].index[0]
-                    df_out.loc[i,'VALUE'] = df_out.loc[i,'VALUE'] + df['VALUE'].sum()
+                    if y in df['YEAR']:
+                        i = df_out.loc[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)].index[0]
+                        df_out.loc[i,'VALUE'] = df_out.loc[i,'VALUE'] + df['VALUE'].sum()
+                    else:
+                        df_out.append(pd.DataFrame([[r,t,df['VALUE'].sum(),y]],columns=['REGION','TECHNOLOGY','VALUE','YEAR']),ignore_index=True)
                 else:
                     df_out.append(pd.DataFrame([[r,t,df['VALUE'].sum(),y]],columns=['REGION','TECHNOLOGY','VALUE','YEAR']),ignore_index=True)
     df_out.to_csv(rc_path,index=False)
