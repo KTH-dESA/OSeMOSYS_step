@@ -78,7 +78,7 @@ def split_dp(directory,step_size):
     # Create datapackage from datafile
     dp_path = df_to_dp(directory)
     # Derive information on modelling period
-    m_period = pd.read_csv(dp_path+'/data/YEAR.CSV')
+    m_period = pd.read_csv(dp_path+'/data/YEAR.csv')
     n_years = len(m_period.index)
     if type(step_size)==int:
         n_steps = n_years/step_size
