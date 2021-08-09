@@ -32,7 +32,7 @@ def sol_gurobi(path_lp,path_res):
     path_sol = path_res + '.sol'
     path_sol_abs = os.path.join(path_pkg, os.sep.join(path_sol.split(os.sep)[1:]))
     path_lp_abs = os.path.join(path_pkg, os.sep.join(path_lp.split(os.sep)[1:]))
-    str_cmd = 'gurobi_cl ResultFile=%(issue)s ResultFile=%(solution)s "%(lp)s"' % {'issue': path_issue_abs,'solution': path_sol_abs,'lp': path_lp}
+    str_cmd = 'gurobi_cl ResultFile=%(issue)s ResultFile=%(solution)s "%(lp)s"' % {'issue': path_issue_abs,'solution': path_sol_abs,'lp': path_lp_abs}
     sp.run(str_cmd,shell=True,capture_output=True)
     if os.path.exists(path_res+'.ilp'):
         path_sol = None
