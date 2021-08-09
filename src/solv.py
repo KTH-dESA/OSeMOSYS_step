@@ -25,9 +25,14 @@ def create_lp(path_df):
 def sol_gurobi(path_lp,path_res):
     # path_lp = '../data/step2/C0E0/C1.lp' #for testing
     # path_res = '../steps/step2/C0E0/C1' #for testing
+    path_script = os.path.dirname(os.path.realpath(__file__))
+    path_pkg = os.path.join(' ', os.sep.join(path_script.split(os.sep)[:-1]))
     path_issue = path_res + '.ilp'
+    path_issue_abs = os.path.join(path_pkg, os.sep.join(path_issue.split(os.sep)[1:]))
     path_sol = path_res + '.sol'
-    str_cmd = 'gurobi_cl ResultFile=%(issue)s ResultFile=%(solution)s "%(lp)s"' % {'issue': path_issue,'solution': path_sol,'lp': path_lp}
+    path_sol_abs = os.path.join(path_pkg, os.sep.join(path_sol.split(os.sep)[1:]))
+    path_lp_abs = os.path.join(path_pkg, os.sep.join(path_lp.split(os.sep)[1:]))
+    str_cmd = 'gurobi_cl ResultFile=%(issue)s ResultFile=%(solution)s "%(lp)s"' % {'issue': path_issue_abs,'solution': path_sol_abs,'lp': path_lp}
     sp.run(str_cmd,shell=True,capture_output=True)
     if os.path.exists(path_res+'.ilp'):
         path_sol = None
