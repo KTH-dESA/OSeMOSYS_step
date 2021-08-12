@@ -2,6 +2,7 @@
 #%% Import of needed packages
 import os
 import subprocess as sp
+import gurobipy
 from otoole import ReadGurobi
 from otoole import ReadDatafile
 from otoole import WriteCsv
@@ -32,14 +33,21 @@ def sol_gurobi(path_lp,path_res):
     path_sol = path_res + '.sol'
     path_sol_abs = os.path.join(path_pkg, os.sep.join(path_sol.split(os.sep)[1:]))
     path_lp_abs = os.path.join(path_pkg, os.sep.join(path_lp.split(os.sep)[1:]))
-    str_cmd = 'gurobi_cl ResultFile=%(issue)s ResultFile=%(solution)s "%(lp)s"' % {'issue': path_issue_abs,'solution': path_sol_abs,'lp': path_lp_abs}
-    sp.run(str_cmd,shell=True,capture_output=True)
+    m = gurobipy.read(path_lp_abs)
+    m.optimize()
+    m.write(path_sol_abs)
+    if not os.stat(path_sol_abs).st_size > 0:
+        m.computeIIS()
+        m.write(path_issue_abs)
+    # str_cmd = 'gurobi_cl ResultFile=%(issue)s ResultFile=%(solution)s "%(lp)s"' % {'issue': path_issue_abs,'solution': path_sol_abs,'lp': path_lp_abs}
+    # sp.run(str_cmd,shell=True,capture_output=True)
     if os.path.exists(path_res+'.ilp'):
         path_sol = None
     if os.path.exists(path_lp):
         os.remove(path_lp)
     else:
         print('The file %s does not exist.' % path_lp)
+
     return path_sol
 #%% Function to solve lp file using cbc
 def sol_cbc(path_lp):
