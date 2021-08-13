@@ -35,14 +35,14 @@ def sol_gurobi(path_lp,path_res):
     path_lp_abs = os.path.join(path_pkg, os.sep.join(path_lp.split(os.sep)[1:]))
     m = gurobipy.read(path_lp_abs)
     m.optimize()
-    m.write(path_sol_abs)
-    if not os.stat(path_sol_abs).st_size > 0:
+    try:
+        m.write(path_sol_abs)
+    except:
         m.computeIIS()
         m.write(path_issue_abs)
-    # str_cmd = 'gurobi_cl ResultFile=%(issue)s ResultFile=%(solution)s "%(lp)s"' % {'issue': path_issue_abs,'solution': path_sol_abs,'lp': path_lp_abs}
-    # sp.run(str_cmd,shell=True,capture_output=True)
     if os.path.exists(path_res+'.ilp'):
         path_sol = None
+        os.remove(path_sol_abs)
     if os.path.exists(path_lp):
         os.remove(path_lp)
     else:
