@@ -143,8 +143,10 @@ def final_paths(scen,paths_p_step,step):
         except OSError:
             print("Creation of the directory %s failed" %p)
     return paths
-#%% Function to copy final results to scenario folders of next step
+#%% 
 def copy_fr(step,dic_scen,paths_res_fin_p):
+    """Function to copy final results to scenario folders of next step.
+    """
     # step = 1 #for testing
     # paths_res_fin_p = dic_fin_res_path[0] #for testing
     if step in dic_scen:
@@ -167,9 +169,12 @@ def main(input_data,step_length,path_param,solver=None):
     # step_length = [1,5] #for testing
     #solver=None #for testing
     if path_param==None:
+        """Create path of folder with scenario information."""
         dir_name = os.getcwd()
         path_param = os.path.join(os.sep.join(dir_name.split(os.sep)[:-1]),'data','scenarios')
     if len(step_length)<2:
+        """Procedure if the step length is always the same.
+        """
         step_length = int(step_length[0])
         dic_yr_in_steps, full_steps = ds.split_dp(input_data,step_length)
         all_steps = len(dic_yr_in_steps)
@@ -252,6 +257,8 @@ def main(input_data,step_length,path_param,solver=None):
                             else:
                                 stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
     else:
+        """Procedure if the first step has a different length than the following steps.
+        """
         step_length_tp = step_length
         step_length = []
         for l in step_length_tp:
