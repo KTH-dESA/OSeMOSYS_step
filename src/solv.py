@@ -78,5 +78,12 @@ def main(solver,path_df,path_res):
         path_sol = sol_gurobi(path_lp,path_res)
         if path_sol != None:
             csv_gurobi(path_sol,path_res,path_df)
+        path_complete = path_res + '.txt'
+        file_done = open(path_complete, "w")
+        file_done.close()
 #%% If run as script
-#if __name__ == '__main__':
+if __name__ == '__main__':
+    solver = str(snakemake.input.solver)
+    path_df = str(snakemake.input.df_path)
+    path_res = str(snakemake.input.res_path)
+    main(solver, path_df, path_res)
