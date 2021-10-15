@@ -3,6 +3,9 @@ PATH_DF = ['../data/step0.txt']
 PATH_RES = ['../steps/step0']
 #FORMATS = ["txt"]
 
+rule all:
+    input:
+        expand("{path}.txt", path=PATH_RES)
 rule run_model:
     input: 
         solver = SOLVER[0],
