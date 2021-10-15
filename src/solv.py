@@ -1,6 +1,7 @@
 "This script conducts the runs of OSeMOSYS models within the OSeMOSYSstep function in cases another solver than glpk is selected"
 #%% Import of needed packages
 import os
+import sys
 import subprocess as sp
 import gurobipy
 from otoole import ReadGurobi
@@ -83,7 +84,7 @@ def main(solver,path_df,path_res):
         file_done.close()
 #%% If run as script
 if __name__ == '__main__':
-    solver = str(snakemake.input.solver)
-    path_df = str(snakemake.input.df_path)
-    path_res = str(snakemake.input.res_path)
+    solver = str(sys.argv[1])
+    path_df = str(sys.argv[2])
+    path_res = str(sys.argv[3])
     main(solver, path_df, path_res)
