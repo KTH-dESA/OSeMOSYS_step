@@ -14,4 +14,4 @@ rule run_model:
     output:
         expand("{path}.txt", path=PATH_RES)#, ext=FORMATS) 
     shell:
-        "python solv.py SOLVER[0] {input.df_path} {input.res_path}"
+        "python solv.py {SOLVER[0]} {input.df_path} {input.res_path}"
