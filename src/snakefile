@@ -1,7 +1,8 @@
-SOLVER = ['gurobi']
-PATH_DF = ['../data/step0.txt']
-PATH_RES = ['../steps/step0']
+import subprocess as sp
 
+SOLVER = ['gurobi']
+PATH_DF = ['../data/step1/C0E0.txt', '../data/step1/C0E1.txt', '../data/step1/C1E0.txt', '../data/step1/C1E1.txt']
+PATH_RES = ['../steps/step1/C0E0', '../steps/step1/C0E1', '../steps/step1/C1E0', '../steps/step1/C1E1']
 rule all:
     input:
         expand("{path}.txt", path=PATH_RES)
@@ -13,5 +14,10 @@ rule run_model:
         res_path = expand("{path}", path=PATH_RES) 
     output:
         expand("{path}.txt", path=PATH_RES)#, ext=FORMATS) 
-    shell:
-        "python solv.py {SOLVER[0]} {input.df_path} {input.res_path}"
+    # shell:
+    #     "python solv.py {SOLVER[0]} {input.df_path} {input.res_path}"
+    run:
+        for f in input.df_path:
+            str_cmd = "python solv.py %(solver)s %(df)s %(res)s" % {'solver': SOLVER[0], 'df': input.df_path[f], 'res': input.res_path[f]}
+            print(str_cmd)
+            sp.run(str_cmd,shell=True, capture_output=True)
