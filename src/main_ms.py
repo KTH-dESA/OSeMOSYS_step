@@ -188,6 +188,7 @@ def main(input_data,step_length,path_param,solver=None):
         dic_fin_res_path = dict()
         for s in range(all_steps):
             paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
+            paths_in_step = []
             paths_df_in_step = []
             paths_res_in_step = []
             if s==0:
@@ -200,15 +201,14 @@ def main(input_data,step_length,path_param,solver=None):
                         paths_df_in_step.append(path_df)
                         ms.dp_to_df(paths_dp_step[sce],path_df)
                         paths_res_in_step.append(dic_step_scen_paths[s][sce])
+                        paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
                 if solver!=None:
                     with open('snakefile', 'r') as file:
                         snakefile = file.readlines()
-                    line_dfs = "PATH_DF = ['" + "', ".join(paths_df_in_step) + "']\n"
-                    line_res = "PATH_RES = ['" + "', ".join(paths_res_in_step) + "']\n"
+                    line_paths = "PATHS = ['" + "', '".join(paths_in_step) + "']\n"
 
-                    snakefile[1] = line_dfs
-                    snakefile[2] = line_res
+                    snakefile[1] = line_paths
 
                     with open('snakefile', 'w') as file:
                         file.writelines(snakefile)
@@ -246,6 +246,7 @@ def main(input_data,step_length,path_param,solver=None):
                                 paths_df_in_step.append(path_df)
                                 ms.dp_to_df(paths_dp_step[i],path_df)
                                 paths_res_in_step.append(dic_step_scen_paths[s][i])
+                                paths_in_step.append(os.sep.join(dic_step_scen_paths[s][i].split(os.sep)[2:]))
 
                             i += 1
                         shutil.rmtree(os.path.join(dic_fin_res_path[s-1][sce],'res'))
@@ -257,16 +258,15 @@ def main(input_data,step_length,path_param,solver=None):
                             paths_df_in_step.append(path_df)
                             ms.dp_to_df(paths_dp_step[sce],path_df)
                             paths_res_in_step.append(dic_step_scen_paths[s][sce])
+                            paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
-                print(paths_df_in_step, paths_res_in_step)
+                print(paths_in_step)
                 if solver != None:
                     with open('snakefile', 'r') as file:
                         snakefile = file.readlines()
-                    line_dfs = "PATH_DF = ['" + "', ".join(paths_df_in_step) + "']\n"
-                    line_res = "PATH_RES = ['" + "', ".join(paths_res_in_step) + "']\n"
+                    line_paths = "PATHS = ['" + "', '".join(paths_in_step) + "']\n"
 
-                    snakefile[1] = line_dfs
-                    snakefile[2] = line_res
+                    snakefile[1] = line_paths
 
                     with open('snakefile', 'w') as file:
                         file.writelines(snakefile)
