@@ -152,8 +152,9 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
 @click.option("--step_length", required=True, multiple=True, help="Provide an integer to indicate the step length, e.g. '5' for five year steps. One can provide the parameter also twice, for example if the first step shall be one year and all following five years one would enter '--step_length 1 --step_length 5'")
 @click.option("--input_data", required=True, default= '../data/utopia.txt', help="The path to the input datafile. relative from the src folder, e.g. '../data/utopia.txt'")
 @click.option("--solver", default=None, help="If another solver than 'glpk' is desired please indicate the solver. [gurobi]")
+@click.option("--cores", default=1, show_default=True, help="Number of cores snakemake is allowed to use.")
 @click.option("--path_param", default=None, help="If the scenario data for the decisions between the steps is safed elsewhere than '../data/scenarios/' on can use this option to indicate the path.")
-def main(input_data,step_length,path_param,solver=None):
+def main(input_data,step_length,path_param,cores,solver=None):
     if path_param==None:
         """Create path of folder with scenario information."""
         dir_name = os.getcwd()
@@ -198,7 +199,7 @@ def main(input_data,step_length,path_param,solver=None):
                     with open('snakefile', 'w') as file:
                         file.writelines(snakefile)
                     
-                    cd_snakemake = "snakemake --cores 1" # one could replace the number of cores with a variable to allow change via input data
+                    cd_snakemake = "snakemake --cores %i" % cores
                     sp.run([cd_snakemake], shell=True, capture_output=True)
 
                 else:
@@ -256,7 +257,7 @@ def main(input_data,step_length,path_param,solver=None):
                     with open('snakefile', 'w') as file:
                         file.writelines(snakefile)
                     
-                    cd_snakemake = "snakemake --cores 1" # one could replace the number of cores with a variable to allow change via input data
+                    cd_snakemake = "snakemake --cores %i" % cores
                     sp.run([cd_snakemake], shell=True, capture_output=True)
 
                 else:
@@ -318,7 +319,7 @@ def main(input_data,step_length,path_param,solver=None):
                     with open('snakefile', 'w') as file:
                         file.writelines(snakefile)
                     
-                    cd_snakemake = "snakemake --cores 1" # one could replace the number of cores with a variable to allow change via input data
+                    cd_snakemake = "snakemake --cores %i" % cores
                     sp.run([cd_snakemake], shell=True, capture_output=True)
 
                 else:
@@ -375,7 +376,7 @@ def main(input_data,step_length,path_param,solver=None):
                     with open('snakefile', 'w') as file:
                         file.writelines(snakefile)
                     
-                    cd_snakemake = "snakemake --cores 1" # one could replace the number of cores with a variable to allow change via input data
+                    cd_snakemake = "snakemake --cores %i" % cores
                     sp.run([cd_snakemake], shell=True, capture_output=True)
 
                 else:
