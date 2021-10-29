@@ -16,7 +16,6 @@ import click
 
 #%% Function to derive scenario information from provided folders and files
 def get_scen(path):
-    #path = '../data/scenarios/' #for testing
     stages = next(os.walk(path))[1]
     dic = dict()
     for s in range(len(stages)):
@@ -41,11 +40,8 @@ def step_directories(path,steps):
     return dic_step_paths
 #%% Function to create a dictionary of scenarios per step
 def scen_dic(dic_dec,all_steps):
-    #dic_dec = dec_dic #for testing
-    #all_steps = all_steps #for testing
     dic_scen = dict()
     for s in range(all_steps):
-        #s=1 #for testing
         if s in dic_dec: # s like step
             choices = []
             for d in dic_dec[s]: # d like decision
@@ -65,8 +61,6 @@ def scen_dic(dic_dec,all_steps):
     return dic_scen
 #%% Function to create directories for each scenario in each step and a dictionary with the paths
 def scen_directories(dic_steps,dic_scen):
-    #dic_steps = dic_step_paths #for testing
-    #dic_scen = dic_scen #for testing
     dic_scen_paths = dic_steps
     for s in dic_steps:
         if s in dic_scen:
@@ -85,9 +79,6 @@ def scen_directories(dic_steps,dic_scen):
     return dic_scen_paths
 #%% Function to copy datapackages of remaining steps
 def copy_dps(step,scen,scen_paths):
-    # step = 3 #for testing
-    # scen = dic_scen #for testing
-    # scen_paths = dic_scen_paths #for testing
     paths_dp = []
     for s in range(len(scen_paths)):
         if step==0:
@@ -148,8 +139,6 @@ def final_paths(scen,paths_p_step,step):
 def copy_fr(step,dic_scen,paths_res_fin_p):
     """Function to copy final results to scenario folders of next step.
     """
-    # step = 1 #for testing
-    # paths_res_fin_p = dic_fin_res_path[0] #for testing
     if step in dic_scen:
         for s in paths_res_fin_p:
             src = os.path.join(s,'res')
@@ -165,10 +154,6 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
 @click.option("--solver", default=None, help="If another solver than 'glpk' is desired please indicate the solver. [gurobi]")
 @click.option("--path_param", default=None, help="If the scenario data for the decisions between the steps is safed elsewhere than '../data/scenarios/' on can use this option to indicate the path.")
 def main(input_data,step_length,path_param,solver=None):
-    # path_param = '../data/scenarios/' #for testing
-    # input_data = '../data/utopia.txt' #for testing
-    # step_length = [1,5] #for testing
-    #solver=None #for testing
     if path_param==None:
         """Create path of folder with scenario information."""
         dir_name = os.getcwd()
@@ -410,7 +395,4 @@ def main(input_data,step_length,path_param,solver=None):
                         stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[1]])
 #%% If run as script
 if __name__ == '__main__':
-    # path_param = '../data/scenarios/' # for testing
-    # input_data = '../data/utopia.txt' # for testing
-    # step_length = [1,5] # for testing
     main() #input_data,step_length,path_param,solver)
