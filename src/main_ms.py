@@ -288,7 +288,7 @@ def main(input_data,step_length,path_param,solver=None):
                                     if dic_scen_paths[z][x].split(os.sep)[p] == dic_scen_paths[s][sce].split(os.sep)[-1]:
                                         dic_scen_paths[z][x] = 'none'
                     else:
-                                stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
+                        stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
 
     else:
         """Procedure if the first step has a different length than the following steps.
@@ -308,6 +308,9 @@ def main(input_data,step_length,path_param,solver=None):
         dic_fin_res_path = dict()
         for s in range(all_steps):
             paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
+            paths_in_step = []
+            paths_df_in_step = []
+            paths_res_in_step = []
             if s==0:
                 dic_fin_res_path[s] = final_paths(dic_scen,[],s)
                 for sce in range(len(dic_scen_paths[s])):
@@ -315,20 +318,39 @@ def main(input_data,step_length,path_param,solver=None):
                         if s in dic_scen:
                             ns.main(dic_scen_paths[s][sce],s,dec_dic[s],dic_scen[s][dic_scen_paths[s][sce].split(os.sep)[-1]],dic_yr_in_steps)
                         path_df = os.sep.join(paths_dp_step[sce].split(os.sep)[:-1])+'.txt'
+                        paths_df_in_step.append(path_df)
                         ms.dp_to_df(paths_dp_step[sce],path_df)
-                        path_res_step = dic_step_scen_paths[s][sce]
-                        if solver!=None:
-                            sl.main(solver,path_df,path_res_step)
-                        else:
-                            ms.run_df(path_df,path_res_step)
-                        if not os.listdir(path_res_step):
-                            for z in range(s+1,len(dic_scen_paths)):
-                                for x in range(len(dic_scen_paths[z])):
-                                    if dic_scen_paths[z][x]!='none':
-                                        if dic_scen_paths[z][x].split(os.sep)[3] == dic_scen_paths[s][sce].split(os.sep)[-1]:
-                                            dic_scen_paths[z][x] = 'none'
-                        else:
-                            stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[0]])
+                        paths_res_in_step.append(dic_step_scen_paths[s][sce])
+                        paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
+
+                if solver!=None:
+                    with open('snakefile', 'r') as file:
+                        snakefile = file.readlines()
+                    line_paths = "PATHS = ['" + "', '".join(paths_in_step) + "']\n"
+
+                    snakefile[1] = line_paths
+
+                    with open('snakefile', 'w') as file:
+                        file.writelines(snakefile)
+                    
+                    cd_snakemake = "snakemake --cores 1" # one could replace the number of cores with a variable to allow change via input data
+                    sp.run([cd_snakemake], shell=True, capture_output=True)
+
+                else:
+                    i = 0
+                    for path_df in paths_df_in_step:
+                        ms.run_df(path_df,paths_res_in_step[i])
+                        i+=1
+
+                for sce in range(len(dic_scen_paths[s])):
+                    if not os.listdir(paths_res_in_step[sce]): #if scenario run failed, this removes following dependent scnearios
+                        for z in range(s+1,len(dic_scen_paths)):
+                            for x in range(len(dic_scen_paths[z])):
+                                if dic_scen_paths[z][x].split(os.sep)[3] == dic_scen_paths[s][sce].split(os.sep)[-1]:
+                                    dic_scen_paths[z][x] = 'none'
+                    else:
+                        stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[0]])
+
             else:
                 dic_fin_res_path[s] = final_paths(dic_scen,dic_fin_res_path[s-1],s)
                 copy_fr(s,dic_scen,dic_fin_res_path[s-1])
@@ -341,21 +363,11 @@ def main(input_data,step_length,path_param,solver=None):
                                 rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
                                 ns.main(dic_scen_paths[s][i],s,dec_dic[s],dic_scen[s][dic_scen_paths[s][i].split(os.sep)[-1]],dic_yr_in_steps)
                                 path_df = os.sep.join(paths_dp_step[i].split(os.sep)[:-1])+'.txt'
+                                paths_df_in_step.append(path_df)
                                 ms.dp_to_df(paths_dp_step[i],path_df)
-                                path_res_step = dic_step_scen_paths[s][i]
-                                if solver!=None:
-                                    sl.main(solver,path_df,path_res_step)
-                                else:
-                                    ms.run_df(path_df,path_res_step)
-                                if not os.listdir(path_res_step):
-                                    p = len(dic_scen_paths[s][i].split(os.sep))-1
-                                    for z in range(s+1,len(dic_scen_paths)):
-                                        for x in range(len(dic_scen_paths[z])):
-                                            if dic_scen_paths[z][x]!='none':
-                                                if dic_scen_paths[z][x].split(os.sep)[p] == dic_scen_paths[s][i].split(os.sep)[-1]:
-                                                    dic_scen_paths[z][x] = 'none'
-                                else:
-                                    stf.main(path_res_step,dic_fin_res_path[s][i],s,dic_yr_in_steps[s].iloc[:step_length[1]])
+                                paths_res_in_step.append(dic_step_scen_paths[s][i])
+                                paths_in_step.append(os.sep.join(dic_step_scen_paths[s][i].split(os.sep)[2:]))
+
                             i += 1
                         shutil.rmtree(os.path.join(dic_fin_res_path[s-1][sce],'res'))
                     else:
@@ -363,21 +375,39 @@ def main(input_data,step_length,path_param,solver=None):
                             path_dp_d = os.path.join(paths_dp_step[sce],'data')
                             rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
                             path_df = os.sep.join(paths_dp_step[sce].split(os.sep)[:-1])+'.txt'
+                            paths_df_in_step.append(path_df)
                             ms.dp_to_df(paths_dp_step[sce],path_df)
-                            path_res_step = dic_step_scen_paths[s][sce]
-                            if solver!=None:
-                                sl.main(solver,path_df,path_res_step)
-                            else:
-                                ms.run_df(path_df,path_res_step)
-                            if not os.listdir(path_res_step):
-                                    p = len(dic_scen_paths[s][sce].split(os.sep))-1
-                                    for z in range(s+1,len(dic_scen_paths)):
-                                        for x in range(len(dic_scen_paths[z])):
-                                            if dic_scen_paths[z][x]!='none':
-                                                if dic_scen_paths[z][x].split(os.sep)[p] == dic_scen_paths[s][sce].split(os.sep)[-1]:
-                                                    dic_scen_paths[z][x] = 'none'
-                            else:
-                                stf.main(path_res_step,dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[1]])
+                            paths_res_in_step.append(dic_step_scen_paths[s][sce])
+                            paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
+
+                if solver!=None:
+                    with open('snakefile', 'r') as file:
+                        snakefile = file.readlines()
+                    line_paths = "PATHS = ['" + "', '".join(paths_in_step) + "']\n"
+
+                    snakefile[1] = line_paths
+
+                    with open('snakefile', 'w') as file:
+                        file.writelines(snakefile)
+                    
+                    cd_snakemake = "snakemake --cores 1" # one could replace the number of cores with a variable to allow change via input data
+                    sp.run([cd_snakemake], shell=True, capture_output=True)
+
+                else:
+                    i = 0
+                    for path_df in paths_df_in_step:
+                        ms.run_df(path_df,paths_res_in_step[i])
+                        i += 1
+                for sce in range(len(paths_res_in_step)):
+                    if not os.listdir(paths_res_in_step[sce]):
+                        p = len(dic_scen_paths[s][sce].split(os.sep))-1
+                        for z in range(s+1,len(dic_scen_paths)):
+                            for x in range(len(dic_scen_paths[z])):
+                                if dic_scen_paths[z][x]!='none':
+                                    if dic_scen_paths[z][x].split(os.sep)[p] == dic_scen_paths[s][sce].split(os.sep)[-1]:
+                                        dic_scen_paths[z][x] = 'none'
+                    else:
+                        stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[1]])
 #%% If run as script
 if __name__ == '__main__':
     # path_param = '../data/scenarios/' # for testing
