@@ -1,5 +1,5 @@
 SOLVER = ['gurobi']
-PATHS = ['step1/C0E0','step1/C0E1','step1/C1E0','step1/C1E1']
+PATHS = []
 rule all:
     input:
         expand("../steps/{path}.txt", path=PATHS)
