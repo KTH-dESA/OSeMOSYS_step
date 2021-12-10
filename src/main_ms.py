@@ -155,6 +155,8 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
 @click.option("--cores", default=1, show_default=True, help="Number of cores snakemake is allowed to use.")
 @click.option("--path_param", default=None, help="If the scenario data for the decisions between the steps is safed elsewhere than '../data/scenarios/' on can use this option to indicate the path.")
 def main(input_data,step_length,path_param,cores,solver=None):
+    log_file = open(os.path.join('..','results','osemosys_step.log'), "w")
+    log_file.close()
     if path_param==None:
         """Create path of folder with scenario information."""
         dir_name = os.getcwd()

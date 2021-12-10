@@ -22,6 +22,10 @@ def create_lp(path_df):
     path_lp = os.path.join(os.sep.join(path_df.split(os.sep)[:-1]),name_lp)
     str_cmd = 'glpsol -m '+os.path.join('"..','model','osemosys.txt"')+ ' -d "%(data)s" --wlp "%(lp)s" --check' % {'data': path_df, 'lp': path_lp}
     sp.run(str_cmd,shell=True,capture_output=True)
+    if not os.path.exists(path_lp):
+        log_file = open(os.path.join('..','results','osemosys_step.log'), "a")
+        log_file.write("Couldn't create %s\n" % path_lp)
+        log_file.close()
     return path_lp
 #%% Function to solve lp file using gurobi
 def sol_gurobi(path_lp,path_res):
