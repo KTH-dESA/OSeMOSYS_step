@@ -63,8 +63,6 @@ def sol_cplex(path_lp):
 #%% 
 "Function to convert gurobi sol file to csvs"
 def csv_gurobi(path_sol,path_res,p_df):
-    #path_sol = '../data/step0.sol' #for testing
-    #path_res = '../data/res' #for testing
     reader = ReadGurobi()
     writer = WriteCsv()
     input_data, _ = ReadDatafile().read(p_df)
@@ -74,18 +72,16 @@ def csv_gurobi(path_sol,path_res,p_df):
         os.remove(path_sol)
 #%% main function
 def main(solver,path_df,path_res):
-    # solver ='gurobi' #for testing
-    # path_df = '../data/step1/C0E0.txt' #for testing
-    # path_res = '../steps/step1/C0E0' #for testing
     create_res_dir(path_res)
     path_lp = create_lp(path_df)
-    if solver == 'gurobi':
-        path_sol = sol_gurobi(path_lp,path_res)
-        if path_sol != None:
-            csv_gurobi(path_sol,path_res,path_df)
-        path_complete = path_res + '.txt'
-        file_done = open(path_complete, "w")
-        file_done.close()
+    if os.path.exists(path_lp):
+        if solver == 'gurobi':
+            path_sol = sol_gurobi(path_lp,path_res)
+            if path_sol != None:
+                csv_gurobi(path_sol,path_res,path_df)
+    path_complete = path_res + '.txt'
+    file_done = open(path_complete, "w")
+    file_done.close()
 #%% If run as script
 if __name__ == '__main__':
     solver = str(sys.argv[1])
