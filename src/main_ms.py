@@ -192,9 +192,9 @@ def main(input_data,step_length,path_param,cores,solver=None):
                         paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
                 if solver!=None:
-                    with open('snakefile', 'r') as file:
+                    with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
-                    line_paths = "PATHS = ['" + "', '".join(paths_in_step) + "']\n"
+                    line_paths = "PATHS = ['" + "',\n'".join(paths_in_step) + "']\n"
 
                     snakefile[1] = line_paths
 
@@ -250,9 +250,9 @@ def main(input_data,step_length,path_param,cores,solver=None):
 
                 print(paths_in_step)
                 if solver != None:
-                    with open('snakefile', 'r') as file:
+                    with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
-                    line_paths = "PATHS = ['" + "', '".join(paths_in_step) + "']\n"
+                    line_paths = "PATHS = ['" + "',\n'".join(paths_in_step) + "']\n"
 
                     snakefile[1] = line_paths
 
@@ -312,9 +312,9 @@ def main(input_data,step_length,path_param,cores,solver=None):
                         paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
                 if solver!=None:
-                    with open('snakefile', 'r') as file:
+                    with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
-                    line_paths = "PATHS = ['" + "', '".join(paths_in_step) + "']\n"
+                    line_paths = "PATHS = ['" + "',\n'".join(paths_in_step) + "']\n"
 
                     snakefile[1] = line_paths
 
@@ -369,9 +369,9 @@ def main(input_data,step_length,path_param,cores,solver=None):
                             paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
                 if solver!=None:
-                    with open('snakefile', 'r') as file:
+                    with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
-                    line_paths = "PATHS = ['" + "', '".join(paths_in_step) + "']\n"
+                    line_paths = "PATHS = ['" + "',\n'".join(paths_in_step) + "']\n"
 
                     snakefile[1] = line_paths
 
