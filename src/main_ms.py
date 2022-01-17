@@ -191,6 +191,10 @@ def main(input_data,step_length,path_param,cores,solver=None):
                         paths_res_in_step.append(dic_step_scen_paths[s][sce])
                         paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
+                log_file = open(os.path.join('..','results','osemosys_step.log'), "a")
+                log_file.write("Paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_in_step})
+                log_file.write("Result paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_res_in_step})
+                log_file.close()
                 if solver!=None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
@@ -248,7 +252,10 @@ def main(input_data,step_length,path_param,cores,solver=None):
                             paths_res_in_step.append(dic_step_scen_paths[s][sce])
                             paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
-                print(paths_in_step)
+                log_file = open(os.path.join('..','results','osemosys_step.log'), "a")
+                log_file.write("Paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_in_step})
+                log_file.write("Result paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_res_in_step})
+                log_file.close()
                 if solver != None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
@@ -311,6 +318,10 @@ def main(input_data,step_length,path_param,cores,solver=None):
                         paths_res_in_step.append(dic_step_scen_paths[s][sce])
                         paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
+                log_file = open(os.path.join('..','results','osemosys_step.log'), "a")
+                log_file.write("Paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_in_step})
+                log_file.write("Result paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_res_in_step})
+                log_file.close()
                 if solver!=None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
@@ -368,6 +379,10 @@ def main(input_data,step_length,path_param,cores,solver=None):
                             paths_res_in_step.append(dic_step_scen_paths[s][sce])
                             paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
+                log_file = open(os.path.join('..','results','osemosys_step.log'), "a")
+                log_file.write("Paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_in_step})
+                log_file.write("Result paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_res_in_step})
+                log_file.close()
                 if solver!=None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
