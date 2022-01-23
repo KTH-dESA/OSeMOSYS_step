@@ -29,8 +29,6 @@ def create_lp(path_df):
     return path_lp
 #%% Function to solve lp file using gurobi
 def sol_gurobi(path_lp,path_res):
-    # path_lp = '../data/step2/C0E0/C1.lp' #for testing
-    # path_res = '../steps/step2/C0E0/C1' #for testing
     path_script = os.path.dirname(os.path.realpath(__file__))
     path_pkg = os.path.join(' ', os.sep.join(path_script.split(os.sep)[:-1]))
     path_issue = path_res + '.ilp'
@@ -38,6 +36,10 @@ def sol_gurobi(path_lp,path_res):
     path_sol = path_res + '.sol'
     path_sol_abs = os.path.join(path_pkg, os.sep.join(path_sol.split(os.sep)[1:]))
     path_lp_abs = os.path.join(path_pkg, os.sep.join(path_lp.split(os.sep)[1:]))
+    scen_sep = '|'
+    scen_info = scen_sep.join(path_res.split(os.sep)[2:])
+    path_grb_log = os.sep.join(['..','results','gurobi_logs',scen_info+'.log'])
+    gurobipy.setParam("LogFile", path_grb_log)
     m = gurobipy.read(path_lp_abs)
     m.optimize()
     try:

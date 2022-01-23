@@ -157,6 +157,9 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
 def main(input_data,step_length,path_param,cores,solver=None):
     log_file = open(os.path.join('..','results','osemosys_step.log'), "w")
     log_file.close()
+    if solver == 'gurobi':
+        path_grb_logs = os.sep.join(['..','results','gurobi_logs'])
+        os.mkdir(path_grb_logs)
     if path_param==None:
         """Create path of folder with scenario information."""
         dir_name = os.getcwd()
