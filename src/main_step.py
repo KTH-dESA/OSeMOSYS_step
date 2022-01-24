@@ -1,15 +1,13 @@
 # main script to run the step function of OSeMOSYS
 #%% Importe required packages
-import sys
+import data_split
 import os
-import subprocess as sp
-import time
 from otoole import ReadDatapackage
 from otoole import WriteDatafile
 from otoole import Context
-import data_split
-import step_to_final as stf
 import results_to_next_step as rtns
+import step_to_final as stf
+import subprocess as sp
 #%% Convert datapackage to datafile
 def dp_to_df(dp_path,df_path):
     # otoole datapackage to datafile

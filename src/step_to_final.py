@@ -1,9 +1,10 @@
 # script to write step results to final results
 #%% Import of needed packages
+import logging as log
 import os
-import sys
-import shutil
 import pandas as pd
+import shutil
+import sys
 #%% Read results of step and filter to years in step
 def read_step_res(path,yr_in_step):  
     result_files = next(os.walk(path))
@@ -23,9 +24,9 @@ def read_res_final(path):
     path = os.path.join(path,'res')
     if os.path.exists(path) and os.path.isdir(path):
         if not os.listdir(path):
-            print("Directory is empty")
+            log.info("%s is empty" % path)
     else:
-        print("Given directory doesn't exist")
+        log.warning("%s doesn't exist" % path)
     final_res_files = next(os.walk(path))
     dic_res_final = dict()
     for i in range(len(final_res_files[2])):
@@ -53,7 +54,7 @@ def write_res(path,res_final):
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
         except Exception as e:
-            print('Failed to delete %s. Reason: %s' (file_path,e))
+            log.warning("Failed to delete %s. Reason: %s" (file_path,e))
     for df in res_final:
         res_final[df].to_csv(os.path.join(path,df),index=False)
     return

@@ -1,19 +1,20 @@
 "This script conducts the runs of OSeMOSYS models within the OSeMOSYSstep function in cases another solver than glpk is selected"
 #%% Import of needed packages
-import os
-import sys
-import subprocess as sp
 import gurobipy
+import logging as log
+import os
 from otoole import ReadGurobi
 from otoole import ReadDatafile
 from otoole import WriteCsv
 from otoole import Context
+import subprocess as sp
+import sys
 #%% Create directory for results
 def create_res_dir(path_res):
     try:
         os.mkdir(path_res)
     except OSError:
-        print("Creation of the directory %s failed" %path_res)
+        log.info("%s couldn't be created" %path_res)
     
     return
 #%% Function to create lp file
@@ -23,12 +24,10 @@ def create_lp(path_df):
     str_cmd = 'glpsol -m '+os.path.join('"..','model','osemosys.txt"')+ ' -d "%(data)s" --wlp "%(lp)s" --check' % {'data': path_df, 'lp': path_lp}
     sp.run(str_cmd,shell=True,capture_output=True)
     if not os.path.exists(path_lp):
-        log_file = open(os.path.join('..','results','osemosys_step.log'), "a")
-        log_file.write("Couldn't create %s\n" % path_lp)
-        log_file.close()
+        log.warning("%s couldn't be created" % path_lp)
     return path_lp
 #%% Function to solve lp file using gurobi
-def sol_gurobi(path_lp,path_res):
+def sol_gurobi(path_lp,path_res, scen_info):
     path_script = os.path.dirname(os.path.realpath(__file__))
     path_pkg = os.path.join(' ', os.sep.join(path_script.split(os.sep)[:-1]))
     path_issue = path_res + '.ilp'
@@ -36,14 +35,13 @@ def sol_gurobi(path_lp,path_res):
     path_sol = path_res + '.sol'
     path_sol_abs = os.path.join(path_pkg, os.sep.join(path_sol.split(os.sep)[1:]))
     path_lp_abs = os.path.join(path_pkg, os.sep.join(path_lp.split(os.sep)[1:]))
-    scen_sep = '|'
-    scen_info = scen_sep.join(path_res.split(os.sep)[2:])
     path_grb_log = os.sep.join(['..','results','gurobi_logs',scen_info+'.log'])
     gurobipy.setParam("LogFile", path_grb_log)
     m = gurobipy.read(path_lp_abs)
     m.optimize()
     try:
         m.write(path_sol_abs)
+        log.info("%s written" % path_sol)
     except:
         m.computeIIS()
         m.write(path_issue_abs)
@@ -53,7 +51,7 @@ def sol_gurobi(path_lp,path_res):
     if os.path.exists(path_lp):
         os.remove(path_lp)
     else:
-        print('The file %s does not exist.' % path_lp)
+        log.warning('%s does not exist.' % path_lp)
 
     return path_sol
 #%% Function to solve lp file using cbc
@@ -74,11 +72,15 @@ def csv_gurobi(path_sol,path_res,p_df):
         os.remove(path_sol)
 #%% main function
 def main(solver,path_df,path_res):
+    scen_sep = '|'
+    scen_info = scen_sep.join(path_res.split(os.sep)[2:])
+    path_log = os.path.join('..','results','solv_logs', scen_info+'.log')
+    log.basicConfig(filename=path_log, level=log.INFO)
     create_res_dir(path_res)
     path_lp = create_lp(path_df)
     if os.path.exists(path_lp):
         if solver == 'gurobi':
-            path_sol = sol_gurobi(path_lp,path_res)
+            path_sol = sol_gurobi(path_lp,path_res, scen_info)
             if path_sol != None:
                 csv_gurobi(path_sol,path_res,path_df)
     path_complete = path_res + '.txt'

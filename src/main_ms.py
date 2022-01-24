@@ -1,18 +1,17 @@
 "This script is the main script for running multi-scenario (ms) multi-stage OSeMOSYS models"
 #%% Import required packages
-from os.path import dirname
-import pandas as pd
-import os
-import subprocess as sp
-import itertools
-import shutil
-import main_step as ms
-import data_split as ds
-import step_to_final as stf
-import results_to_next_step as rtns
-import new_scen as ns
-import solv as sl
 import click
+import data_split as ds
+import itertools
+import logging as log
+import main_step as ms
+import new_scen as ns
+import os
+import pandas as pd
+import results_to_next_step as rtns
+import shutil
+import step_to_final as stf
+import subprocess as sp
 
 #%% Function to derive scenario information from provided folders and files
 def get_scen(path):
@@ -155,11 +154,13 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
 @click.option("--cores", default=1, show_default=True, help="Number of cores snakemake is allowed to use.")
 @click.option("--path_param", default=None, help="If the scenario data for the decisions between the steps is safed elsewhere than '../data/scenarios/' on can use this option to indicate the path.")
 def main(input_data,step_length,path_param,cores,solver=None):
-    log_file = open(os.path.join('..','results','osemosys_step.log'), "w")
-    log_file.close()
+    path_log = os.path.join('..','results','osemosys_step.log')
+    log.basicConfig(filename=path_log, level=log.INFO)
     if solver == 'gurobi':
         path_grb_logs = os.sep.join(['..','results','gurobi_logs'])
+        path_sol_logs = os.sep.join(['..','results','solv_logs'])
         os.mkdir(path_grb_logs)
+        os.mkdir(path_sol_logs)
     if path_param==None:
         """Create path of folder with scenario information."""
         dir_name = os.getcwd()
@@ -178,6 +179,7 @@ def main(input_data,step_length,path_param,cores,solver=None):
         dic_step_scen_paths = scen_directories(dic_step_res_paths,dic_scen)
         dic_fin_res_path = dict()
         for s in range(all_steps):
+            log.info('Step %i started' % s)
             paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
             paths_in_step = []
             paths_df_in_step = []
@@ -194,10 +196,8 @@ def main(input_data,step_length,path_param,cores,solver=None):
                         paths_res_in_step.append(dic_step_scen_paths[s][sce])
                         paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
-                log_file = open(os.path.join('..','results','osemosys_step.log'), "a")
-                log_file.write("Paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_in_step})
-                log_file.write("Result paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_res_in_step})
-                log_file.close()
+                log.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
+                log.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
                 if solver!=None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
@@ -255,10 +255,8 @@ def main(input_data,step_length,path_param,cores,solver=None):
                             paths_res_in_step.append(dic_step_scen_paths[s][sce])
                             paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
-                log_file = open(os.path.join('..','results','osemosys_step.log'), "a")
-                log_file.write("Paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_in_step})
-                log_file.write("Result paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_res_in_step})
-                log_file.close()
+                log.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
+                log.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
                 if solver != None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
@@ -305,6 +303,7 @@ def main(input_data,step_length,path_param,cores,solver=None):
         dic_step_scen_paths = scen_directories(dic_step_res_paths,dic_scen)
         dic_fin_res_path = dict()
         for s in range(all_steps):
+            log.info('Step %i started' % s)
             paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
             paths_in_step = []
             paths_df_in_step = []
@@ -321,10 +320,8 @@ def main(input_data,step_length,path_param,cores,solver=None):
                         paths_res_in_step.append(dic_step_scen_paths[s][sce])
                         paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
-                log_file = open(os.path.join('..','results','osemosys_step.log'), "a")
-                log_file.write("Paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_in_step})
-                log_file.write("Result paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_res_in_step})
-                log_file.close()
+                log.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
+                log.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
                 if solver!=None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
@@ -382,10 +379,8 @@ def main(input_data,step_length,path_param,cores,solver=None):
                             paths_res_in_step.append(dic_step_scen_paths[s][sce])
                             paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
-                log_file = open(os.path.join('..','results','osemosys_step.log'), "a")
-                log_file.write("Paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_in_step})
-                log_file.write("Result paths in step %(step)i: %(paths)s\n" % {'step': s, 'paths': paths_res_in_step})
-                log_file.close()
+                log.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
+                log.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
                 if solver!=None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
