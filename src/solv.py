@@ -35,8 +35,6 @@ def sol_gurobi(path_lp,path_res, scen_info):
     path_sol = path_res + '.sol'
     path_sol_abs = os.path.join(path_pkg, os.sep.join(path_sol.split(os.sep)[1:]))
     path_lp_abs = os.path.join(path_pkg, os.sep.join(path_lp.split(os.sep)[1:]))
-    path_grb_log = os.sep.join(['..','results','gurobi_logs',scen_info+'.log'])
-    gurobipy.setParam("LogFile", path_grb_log)
     m = gurobipy.read(path_lp_abs)
     m.optimize()
     try:
