@@ -6,10 +6,18 @@ rule all:
 
 rule run_model:
     input: 
-        df_path = "../data/{path}.txt",
+        preped_df_path = "../data/{path}_preped.txt",
     params:
         res_path = "../steps/{path}"
     output:
         "../steps/{path}.txt"
     shell:
         "python solv.py {SOLVER[0]} {input.df_path} {params.res_path}"
+
+rule preprocess_data:
+    input:
+        df_path = "../data/{path}.txt",
+    output:
+        preped_df = "../data/{path}_preped.txt"
+    shell:
+        "python preprocess_data.py otoole {input.df_path} {output.preped_df}"
