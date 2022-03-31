@@ -12,7 +12,7 @@ rule run_model:
     output:
         "../steps/{path}.txt"
     shell:
-        "python solv.py {SOLVER[0]} {input.df_path} {params.res_path}"
+        "python solv.py {SOLVER[0]} {input.preped_df_path} {params.res_path}"
 
 rule preprocess_data:
     input:
