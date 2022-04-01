@@ -69,13 +69,14 @@ def csv_gurobi(path_sol,path_res,p_df):
     if os.path.exists(path_sol):
         os.remove(path_sol)
 #%% main function
-def main(solver,path_df,path_res):
+def main(solver,path_df_prep,path_res):
     scen_sep = '|'
     scen_info = scen_sep.join(path_res.split(os.sep)[2:])
     path_log = os.path.join('..','results','solv_logs', scen_info+'.log')
     log.basicConfig(filename=path_log, level=log.INFO)
     create_res_dir(path_res)
-    path_lp = create_lp(path_df)
+    path_df = path_df_prep.split('_')[0] + '.txt'
+    path_lp = create_lp(path_df_prep)
     if os.path.exists(path_lp):
         if solver == 'gurobi':
             path_sol = sol_gurobi(path_lp,path_res, scen_info)
