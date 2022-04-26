@@ -11,6 +11,8 @@ rule run_model:
         res_path = "../steps/{path}"
     output:
         "../steps/{path}.txt"
+    benchmark:
+        "../results/benchmarks/{path}_benchmark.txt"
     shell:
         "python solv.py {SOLVER[0]} {input.preped_df_path} {params.res_path}"
 
