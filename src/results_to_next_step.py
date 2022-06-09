@@ -30,7 +30,7 @@ def main(dp_path,fr_path):
                     i = df_out.loc[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)].index[0]
                     df_out.loc[i,'VALUE'] = df_out.loc[i,'VALUE'] + df['VALUE'].sum()
                 else:
-                    df_out.append(pd.DataFrame([[r,t,df['VALUE'].sum(),y]],columns=['REGION','TECHNOLOGY','VALUE','YEAR']),ignore_index=True)
+                    df_out = df_out.append(pd.DataFrame([[r,t,y,df['VALUE'].sum()]],columns=['REGION','TECHNOLOGY','YEAR', 'VALUE']),ignore_index=True)
     df_out.to_csv(rc_path,index=False)
     return
 #%% If run as script
