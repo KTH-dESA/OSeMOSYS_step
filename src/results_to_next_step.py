@@ -25,7 +25,7 @@ def main(dp_path,fr_path):
                 df = df_nc
                 df = df[df['TECHNOLOGY']==t]
                 ol = df_ol.loc[df_ol.loc[df_ol['TECHNOLOGY']==t].index[0],'VALUE']
-                df = df[df['YEAR']>(y-ol)]
+                df = df[((y+1)>df['YEAR'])&(df['YEAR']>(y-ol))]
                 if len(df_out[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)]) > 0 :
                     i = df_out.loc[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)].index[0]
                     df_out.loc[i,'VALUE'] = df_out.loc[i,'VALUE'] + df['VALUE'].sum()
