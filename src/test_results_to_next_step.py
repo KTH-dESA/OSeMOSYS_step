@@ -13,10 +13,10 @@ class TestResultsTransfer:
         res_cap = pd.read_csv(os.path.join(dp_path, 'ResidualCapacity.csv'))
         
         data = [
-            ['TEST','TECA',0,2],
+            ['TEST','TECA',0,1.5],
             ['TEST','TECB',0,1],
             ['TEST','TECB',1,2],
-            ['TEST','TECA',1,1],
+            ['TEST','TECA',1,0.5],
             ['TEST','TECC',0,1],
             ['TEST','TECC',1,0],
         ]

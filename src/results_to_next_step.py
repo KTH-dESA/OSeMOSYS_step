@@ -5,8 +5,8 @@ import sys
 import os
 #%% Main function to coordinate the script
 def main(dp_path,fr_path):
-    #dp_path = '../data/datapackage1/data' #for testing
-    #fr_path = '../results' #for testing
+    #dp_path = '../tests/fixtures/data' #for testing
+    #fr_path = '../tests/fixtures/results' #for testing
     rc_path = os.path.join(dp_path,'ResidualCapacity.csv')
     ol_path = os.path.join(dp_path,'OperationalLife.csv')
     nc_path = os.path.join(fr_path,'res','NewCapacity.csv')
@@ -31,6 +31,7 @@ def main(dp_path,fr_path):
                     df_out.loc[i,'VALUE'] = df_out.loc[i,'VALUE'] + df['VALUE'].sum()
                 else:
                     df_out = df_out.append(pd.DataFrame([[r,t,y,df['VALUE'].sum()]],columns=['REGION','TECHNOLOGY','YEAR', 'VALUE']),ignore_index=True)
+    df_out = df_out.round({'VALUE':4})
     df_out.to_csv(rc_path,index=False)
     return
 #%% If run as script
