@@ -347,7 +347,7 @@ def main(input_data,step_length,path_param,cores,solver=None):
                     else:
                         stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[0]])
 
-            elif s<4:
+            else:
                 dic_fin_res_path[s] = final_paths(dic_scen,dic_fin_res_path[s-1],s)
                 copy_fr(s,dic_scen,dic_fin_res_path[s-1])
                 i = 0
