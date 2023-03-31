@@ -1,2 +1,2 @@
 # OSeMOSYS step
-This repository serves the development of a set of scripts to conduct myopic model runs with OSeMOSYS models.
+This repository contains a set of scripts to conduct model runs with limited foresight with OSeMOSYS models.
