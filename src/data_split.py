@@ -15,6 +15,10 @@ def df_to_dp(path):
     #path = '../data/utopia.txt' #for development
     #file = '/utopia.txt' #for development
     dp_path = '../data/datapackage'
+    # try:
+    #     os.mkdir(dp_path)
+    # except FileExistsError:
+    #     pass
     os.mkdir(dp_path)
     reader = ReadDatafile()
     writer = WriteDatapackage()

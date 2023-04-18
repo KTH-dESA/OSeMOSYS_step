@@ -1,5 +1,5 @@
 "This script is the main script for running multi-scenario (ms) multi-stage OSeMOSYS models"
-#%% Import required packages
+
 import click
 import data_split as ds
 import itertools
@@ -13,7 +13,8 @@ import shutil
 import step_to_final as stf
 import subprocess as sp
 
-#%% Function to derive scenario information from provided folders and files
+
+# Function to derive scenario information from provided folders and files
 def get_scen(path):
     stages = next(os.walk(path))[1]
     dic = dict()
@@ -25,7 +26,8 @@ def get_scen(path):
         for d in dec:
             dic[int(stages[s])][d.split('.')[0]] = pd.read_csv(os.path.join(path_s,d))
     return dic
-#%% Function to create folder for each step and a dictonary with their paths
+
+# Function to create folder for each step and a dictonary with their paths
 def step_directories(path,steps):
     dic_step_paths = dict()
     for s in range(steps):
@@ -37,7 +39,8 @@ def step_directories(path,steps):
         except OSError:
             print("Creation of the directory %s failed" % path_step)
     return dic_step_paths
-#%% Function to create a dictionary of scenarios per step
+
+# Function to create a dictionary of scenarios per step
 def scen_dic(dic_dec,all_steps):
     dic_scen = dict()
     for s in range(all_steps):
@@ -58,7 +61,8 @@ def scen_dic(dic_dec,all_steps):
                     dic_cho[combinations[p][c][0]] = combinations[p][c][1:]
                 dic_scen[s][scenario] = dic_cho
     return dic_scen
-#%% Function to create directories for each scenario in each step and a dictionary with the paths
+
+# Function to create directories for each scenario in each step and a dictionary with the paths
 def scen_directories(dic_steps,dic_scen):
     dic_scen_paths = dic_steps
     for s in dic_steps:
@@ -76,7 +80,8 @@ def scen_directories(dic_steps,dic_scen):
                                 print("Creation of the directory %s failed" % path_scenario)
                             dic_scen_paths[step].append(path_scenario)
     return dic_scen_paths
-#%% Function to copy datapackages of remaining steps
+
+# Function to copy datapackages of remaining steps
 def copy_dps(step,scen,scen_paths):
     paths_dp = []
     for s in range(len(scen_paths)):
@@ -111,7 +116,9 @@ def copy_dps(step,scen,scen_paths):
                         else:
                             paths_dp.append('none')
     return paths_dp
-#%% Create directories and paths for final results
+
+# Create directories and paths for final results
+
 def final_paths(scen,paths_p_step,step):
     paths = []
     if step==0:
@@ -134,7 +141,7 @@ def final_paths(scen,paths_p_step,step):
         except OSError:
             print("Creation of the directory %s failed" %p)
     return paths
-#%% 
+
 def copy_fr(step,dic_scen,paths_res_fin_p):
     """Function to copy final results to scenario folders of next step.
     """
@@ -144,7 +151,8 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
             for t in dic_scen[step]:
                 dest = os.path.join(s,t,'res')
                 shutil.copytree(src,dest)
-#%% Main function to coordinate the script
+
+# Main function to coordinate the script
 "The main function of main_ms takes always three inputs and can take the optional input solver. The three needed inputs are the path to the datafile of the model, the step length - either an integer in case the step length is always the same or a list of two integers, the first indicating the length of the first step and the second of the remaining steps - and the path to the folder with the csv files containing the data for the parameter to varied between scenarios. The solver can be indicate in the following way 'solver=gurobi'"
 # inteact with command prompt or terminal to get all needed input
 @click.command()
@@ -157,7 +165,10 @@ def main(input_data,step_length,path_param,cores,solver=None):
     path_log = os.path.join('..','results','osemosys_step.log')
     log.basicConfig(filename=path_log, level=log.INFO)
     path_sol_logs = os.sep.join(['..','results','solv_logs'])
-    os.mkdir(path_sol_logs)
+    try: 
+        os.mkdir(path_sol_logs)
+    except FileExistsError:
+        pass
     if path_param==None:
         """Create path of folder with scenario information."""
         dir_name = os.getcwd()
@@ -406,6 +417,7 @@ def main(input_data,step_length,path_param,cores,solver=None):
                                         dic_scen_paths[z][x] = 'none'
                     else:
                         stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[1]])
-#%% If run as script
+
+
 if __name__ == '__main__':
     main() #input_data,step_length,path_param,solver)
