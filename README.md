@@ -175,7 +175,7 @@ bash clean.sh
 ## 5. Run the workflow 
 ```bash 
 cd src
-python main_ms.py --step_length 5 --input_data ../data/utopia.txt 
+python main_ms.py --step_length 5 --input_data ../data/<datafile_name>.txt 
 ```
 
 ## 6. View Results
