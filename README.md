@@ -91,7 +91,7 @@ about allowing investment in coal.
 Drop in an osemsosys file (called `osemosys.txt`) into the `model/` directory
 
 ## 2. Add the base data file
-Drop in a MathProg formatted data file inot the `data/` folder. The data file 
+Drop in a MathProg formatted data file in the `data/` folder. The data file 
 can be long formatted (otoole) or wide formatted (momani)
 
 ## 3. Add in scenario data 
@@ -111,7 +111,7 @@ option allows investment in IMPHCO, and one options does not allow it.
 | TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 1      | 2009 | 0         |
 | TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 1      | 2010 | 0         |
 
-In this same step, but independent from the decesion to invest in IMPHCO, we 
+In this same step, but independent from the decision to invest in IMPHCO, we 
 want to also add the option to invest in importing uranium. Add the file 
 `data/scenarios/1/B.csv`
 
