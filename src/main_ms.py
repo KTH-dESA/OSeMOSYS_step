@@ -3,28 +3,40 @@
 import click
 import data_split as ds
 import itertools
-import logging as log
 import main_step as ms
 import new_scen as ns
 import os
+from pathlib import Path
 import pandas as pd
 import results_to_next_step as rtns
 import shutil
 import step_to_final as stf
 import subprocess as sp
+from typing import Dict, List
 
+import logging
 
-# Function to derive scenario information from provided folders and files
-def get_scen(path):
-    stages = next(os.walk(path))[1]
+logger = logging.getLogger(__name__)
+path_log = os.path.join('..','results','osemosys_step.log')
+logger.basicConfig(filename=path_log, level=logger.INFO)
+
+def get_scen(path: str) -> Dict[int, Dict[str, pd.DataFrame]]:
+    """Derive scenario information from provided folders and files
+    
+    Args: 
+        path: str
+    
+    Returns:
+        Dict[int, Dict[str, pd.DataFrame]]
+    """
+    stages = next(os.walk(path))[1] # returns subdirs in scenarios/
     dic = dict()
-    for s in range(len(stages)):
-        path_s = os.path.join(path,stages[s])
-        dic[int(stages[s])] = dict()
-        for root, dirs, files in os.walk(path_s):
+    for stage, stage_path in enumerate(stages):
+        dic[stage] = dict()
+        for root, dirs, files in os.walk(stage_path):
             dec = [f for f in files if not f[0] == '.']
         for d in dec:
-            dic[int(stages[s])][d.split('.')[0]] = pd.read_csv(os.path.join(path_s,d))
+            dic[stage][d.split('.')[0]] = pd.read_csv(Path(stage_path,d))
     return dic
 
 # Function to create folder for each step and a dictonary with their paths
@@ -82,9 +94,19 @@ def scen_directories(dic_steps,dic_scen):
     return dic_scen_paths
 
 # Function to copy datapackages of remaining steps
-def copy_dps(step,scen,scen_paths):
+def copy_dps(step: int, scen: str, scen_paths: str) -> List[str]:
+    """Copy data folders of remaining steps 
+    
+    Args:
+        step: int
+        scen: str
+        scen_paths: str
+    
+    Returns: 
+        List[str]
+    """
     paths_dp = []
-    for s in range(len(scen_paths)):
+    for s, _ in enumerate(scen_paths):
         if step==0:
             for i in range(len(scen_paths[0])):
                 src = os.path.join('..','data','datapackage'+str(s))
@@ -160,35 +182,37 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
 @click.option("--input_data", required=True, default= '../data/utopia.txt', help="The path to the input datafile. relative from the src folder, e.g. '../data/utopia.txt'")
 @click.option("--solver", default=None, help="If another solver than 'glpk' is desired please indicate the solver. [gurobi]")
 @click.option("--cores", default=1, show_default=True, help="Number of cores snakemake is allowed to use.")
-@click.option("--path_param", default=None, help="If the scenario data for the decisions between the steps is safed elsewhere than '../data/scenarios/' on can use this option to indicate the path.")
-def main(input_data,step_length,path_param,cores,solver=None):
-    path_log = os.path.join('..','results','osemosys_step.log')
-    log.basicConfig(filename=path_log, level=log.INFO)
+@click.option("--path_param", default=None, help="If the scenario data for the decisions between the steps is saved elsewhere than '../data/scenarios/' on can use this option to indicate the path.")
+def main(input_data: str, step_length: int, path_param: str, cores: int, solver=None):
+    """Main entry point for workflow"""
+
+    # set up solver logs
     path_sol_logs = os.sep.join(['..','results','solv_logs'])
     try: 
         os.mkdir(path_sol_logs)
     except FileExistsError:
         pass
-    if path_param==None:
-        """Create path of folder with scenario information."""
+    
+    # Create scenarios folder
+    if path_param == None:
         dir_name = os.getcwd()
         path_param = os.path.join(os.sep.join(dir_name.split(os.sep)[:-1]),'data','scenarios')
-    if len(step_length)<2:
-        """Procedure if the step length is always the same.
-        """
+        
+    # Step length is always the same 
+    if len(step_length) < 2:
         step_length = int(step_length[0])
-        dic_yr_in_steps, full_steps = ds.split_dp(input_data,step_length)
+        dic_yr_in_steps, _ = ds.split_data(input_data, step_length)
         all_steps = len(dic_yr_in_steps)
         dec_dic = get_scen(path_param) #Create dictionary for stages with decisions creating new scenarios
-        dic_step_paths = step_directories(os.sep.join(['..','data']),all_steps)
-        dic_scen = scen_dic(dec_dic,all_steps)
-        dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
+        dic_step_paths = step_directories(os.sep.join(['..','data']), all_steps)
+        dic_scen = scen_dic(dec_dic, all_steps)
+        dic_scen_paths = scen_directories(dic_step_paths, dic_scen)
         dic_step_res_paths = step_directories(os.sep.join(['..','steps']),all_steps)
         dic_step_scen_paths = scen_directories(dic_step_res_paths,dic_scen)
         dic_fin_res_path = dict()
         for s in range(all_steps):
-            log.info('Step %i started' % s)
-            paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
+            logger.info(f"Step {s} started")
+            paths_dp_step = copy_dps(s, dic_scen, dic_scen_paths)
             paths_in_step = []
             paths_df_in_step = []
             paths_res_in_step = []
@@ -204,8 +228,8 @@ def main(input_data,step_length,path_param,cores,solver=None):
                         paths_res_in_step.append(dic_step_scen_paths[s][sce])
                         paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
-                log.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
-                log.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
+                logger.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
+                logger.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
                 if solver!=None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
@@ -263,8 +287,8 @@ def main(input_data,step_length,path_param,cores,solver=None):
                             paths_res_in_step.append(dic_step_scen_paths[s][sce])
                             paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
-                log.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
-                log.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
+                logger.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
+                logger.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
                 if solver != None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
@@ -301,7 +325,7 @@ def main(input_data,step_length,path_param,cores,solver=None):
         step_length = []
         for l in step_length_tp:
             step_length.append(int(l))
-        dic_yr_in_steps, full_steps = ds.split_dp(input_data,step_length)
+        dic_yr_in_steps, full_steps = ds.split_data(input_data,step_length)
         all_steps = len(dic_yr_in_steps)
         dec_dic = get_scen(path_param) #Create dictionary for stages with decisions creating new scenarios
         dic_step_paths = step_directories(os.path.join('..','data'),all_steps)
@@ -311,7 +335,7 @@ def main(input_data,step_length,path_param,cores,solver=None):
         dic_step_scen_paths = scen_directories(dic_step_res_paths,dic_scen)
         dic_fin_res_path = dict()
         for s in range(all_steps):
-            log.info('Step %i started' % s)
+            logger.info('Step %i started' % s)
             paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
             paths_in_step = []
             paths_df_in_step = []
@@ -328,8 +352,8 @@ def main(input_data,step_length,path_param,cores,solver=None):
                         paths_res_in_step.append(dic_step_scen_paths[s][sce])
                         paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
-                log.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
-                log.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
+                logger.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
+                logger.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
                 if solver!=None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
@@ -387,8 +411,8 @@ def main(input_data,step_length,path_param,cores,solver=None):
                             paths_res_in_step.append(dic_step_scen_paths[s][sce])
                             paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
-                log.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
-                log.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
+                logger.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
+                logger.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
                 if solver!=None:
                     with open('snakefile_tpl.txt', 'r') as file:
                         snakefile = file.readlines()
