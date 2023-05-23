@@ -13,6 +13,7 @@ import shutil
 import step_to_final as stf
 import subprocess as sp
 from typing import Dict, List
+import utils
 
 import logging
 
@@ -39,21 +40,37 @@ def get_scen(path: str) -> Dict[int, Dict[str, pd.DataFrame]]:
             dic[stage][d.split('.')[0]] = pd.read_csv(Path(stage_path,d))
     return dic
 
-# Function to create folder for each step and a dictonary with their paths
-def step_directories(path,steps):
+def step_directories(path: str, steps: int) -> Dict[int, List[str]]:
+    """Create folder for each step and a dictonary with their paths
+    
+    Args:
+        path: str
+            path to suffix of file 
+        steps: List[int]
+            Number of steps
+            
+    Returns 
+        Dict[int, str]
+    """
+    
     dic_step_paths = dict()
-    for s in range(steps):
-        path_step = os.path.join(path,'step'+str(s))
-        dic_step_paths[s] = list()
-        dic_step_paths[s].append(path_step)
+    for step in range(steps):
+        path_step = os.path.join(path, f"step_{step}")
+        dic_step_paths[step] = [path_step]
         try:
             os.mkdir(path_step)
         except OSError:
-            print("Creation of the directory %s failed" % path_step)
+            print(f"Creation of the directory {path_step} failed")
     return dic_step_paths
 
-# Function to create a dictionary of scenarios per step
-def scen_dic(dic_dec,all_steps):
+def scen_dic(dic_dec: Dict[int, Dict[str, pd.DataFrame]], all_steps: int) -> Dict[int, Dict[str, Dict[str]]]:
+    """Create a dictionary of scenarios per step
+    
+    Args: 
+        dic_dec: Dict[int, Dict[str, pd.DataFrame]]
+            Decision dictionary 
+        all_steps: int
+    """
     dic_scen = dict()
     for s in range(all_steps):
         if s in dic_dec: # s like step
@@ -61,7 +78,7 @@ def scen_dic(dic_dec,all_steps):
             for d in dic_dec[s]: # d like decision
                 d_list = []
                 for o in dic_dec[s][d]['OPTION'].unique():
-                    d_list.append(d+str(o))
+                    d_list.append(d + str(o))
                 choices.append(d_list)
             combinations = list(itertools.product(*choices))
             dic_scen[s] = dict()
@@ -174,6 +191,27 @@ def copy_fr(step,dic_scen,paths_res_fin_p):
                 dest = os.path.join(s,t,'res')
                 shutil.copytree(src,dest)
 
+
+def first_step():
+    """Copy over data for first step"""
+    pass
+
+def second_step():
+    """Copy residual capacity data from previous step"""
+    
+def step(step_num: int):
+    """Logic for the step
+    
+    Args: 
+        step_num: int
+            The step number 
+    """
+    
+    if step_num == 0:
+        first_step()
+    else:
+        second_step()
+
 # Main function to coordinate the script
 "The main function of main_ms takes always three inputs and can take the optional input solver. The three needed inputs are the path to the datafile of the model, the step length - either an integer in case the step length is always the same or a list of two integers, the first indicating the length of the first step and the second of the remaining steps - and the path to the folder with the csv files containing the data for the parameter to varied between scenarios. The solver can be indicate in the following way 'solver=gurobi'"
 # inteact with command prompt or terminal to get all needed input
@@ -198,13 +236,24 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         dir_name = os.getcwd()
         path_param = os.path.join(os.sep.join(dir_name.split(os.sep)[:-1]),'data','scenarios')
         
+    # format step length 
+    step_length = utils.format_step_input(step_length)
+        
     # Step length is always the same 
     if len(step_length) < 2:
-        step_length = int(step_length[0])
+        
+        # get step length parameters 
+        step_length = step_length[0]
         dic_yr_in_steps, _ = ds.split_data(input_data, step_length)
         all_steps = len(dic_yr_in_steps)
-        dec_dic = get_scen(path_param) #Create dictionary for stages with decisions creating new scenarios
+        
+        # dictionary for stages with decisions creating new scenarios
+        dec_dic = get_scen(path_param) 
+        
+        # create data/step_# directories 
         dic_step_paths = step_directories(os.sep.join(['..','data']), all_steps)
+        
+        
         dic_scen = scen_dic(dec_dic, all_steps)
         dic_scen_paths = scen_directories(dic_step_paths, dic_scen)
         dic_step_res_paths = step_directories(os.sep.join(['..','steps']),all_steps)
@@ -229,6 +278,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                         paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
 
                 logger.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
+                logger.info(f"Paths in step {s}")
                 logger.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
                 if solver!=None:
                     with open('snakefile_tpl.txt', 'r') as file:

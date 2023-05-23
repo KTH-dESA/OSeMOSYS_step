@@ -1,6 +1,7 @@
 """Utility functions"""
 
 import os
+import shutil
 from pathlib import Path 
 from typing import Dict, Any, List
 from yaml import load 
@@ -42,3 +43,18 @@ def format_step_input(steps: Any) -> List[int]:
         logger.error(f"Step must be less than 2 values. Recieved length of {len(steps)}")
     
     return [int(s) for s in steps]
+
+def copy_csvs(src: str, dst: str) -> None:
+    """Copies directories of CSV data
+        
+    Args:
+        src: str
+            Source directory 
+        dst: str
+            Destination directory 
+    """
+    for f in os.listdir(src):
+        source_file = os.path.join(src, f)
+        dst_file = os.path.join(dst, f)
+        shutil.copy(source_file, dst_file)
+    

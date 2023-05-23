@@ -91,7 +91,9 @@ def split_data(datafile: str, step_size: List[int]) -> Tuple[Dict, int]:
     
     Returns:
         dic_yr_step: Dict
+            {step: years in step}
         full_steps: int
+            Number of full steps in model run 
     """
     
     # check for directory structure 
@@ -133,7 +135,7 @@ def split_data(datafile: str, step_size: List[int]) -> Tuple[Dict, int]:
             dic_yr_step[i] = step_years
             step_data = get_step_data(data, step_years)
             write_csv(step_data, default_values, str(Path(data_dir, f"data_{i}")), config)
-            logger.info("Wrote data for step {i}")
+            logger.info(f"Wrote data for step {i}")
     else:
         for i in range(all_steps):
             if i == 0:
@@ -150,7 +152,7 @@ def split_data(datafile: str, step_size: List[int]) -> Tuple[Dict, int]:
             dic_yr_step[i] = step_years
             step_data = get_step_data(data, step_years)
             write_csv(step_data, default_values, str(Path(data_dir, f"data_{i}")), config)
-            logger.info("Wrote data for step {i}")
+            logger.info(f"Wrote data for step {i}")
                 
     return dic_yr_step, full_steps
 
