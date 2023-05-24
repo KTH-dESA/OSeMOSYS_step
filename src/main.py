@@ -62,6 +62,10 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     except FileExistsError:
         pass
     
+    ##########################################################################
+    # Setup data and folder structure 
+    ##########################################################################
+    
     # Create scenarios folder
     if path_param == None:
         dir_name = os.getcwd()
@@ -95,6 +99,27 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     
     # copy over step/scenario/option data
     mu.copy_reference_option_data(src_dir=data_dir, dst_dir=data_dir, options_per_step=step_options)
+
+    ##########################################################################
+    # Create MathProg datafiles 
+    ##########################################################################
+
+    csv_dirs = mu.get_option_combinations_per_step(step_options)
+    otoole_config = utils.read_otoole_config(Path("..", "data", "config.yaml"))
+    for step, options in csv_dirs.items():
+        if not options:
+            csvs = Path("..", "data", f"step_{step}")
+            datafile = Path("..", "steps", f"step_{step}", "data.txt")
+            mu.create_datafile(csvs, datafile, otoole_config)
+        else:
+            for option in options:
+                csvs = Path("..", "data", f"step_{step}")
+                datafile = Path("..", "steps", f"step_{step}")
+                for each_option in option:
+                    csvs = csvs.joinpath(each_option)
+                    datafile = datafile.joinpath(each_option)
+                datafile = datafile.joinpath("data.txt")
+                mu.create_datafile(csvs, datafile, otoole_config)
 
 
 """

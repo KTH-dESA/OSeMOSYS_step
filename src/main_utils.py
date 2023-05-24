@@ -1,12 +1,15 @@
 """utility functions for the main script"""
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 import pandas as pd
 import os
 from pathlib import Path
 import itertools
 import logging
 import utils
+from otoole import WriteDatafile
+from otoole import ReadCsv
+from otoole import Context
 
 logger = logging.getLogger(__name__)
 
@@ -226,7 +229,7 @@ def get_option_combinations_per_step(options_per_step: Dict[int, List[List[str]]
     
     option_combos_per_step = {}
     max_step = max(list(options_per_step))
-    for step_num in range(0, max_step + 1):
+    for step_num in range(0, max_step):
         current_step = step_num
         last_step = current_step - 1
        
@@ -415,3 +418,19 @@ def add_missing_steps(options_per_step: Dict[int, List[str]], max_step: int):
         except KeyError:
             options_per_step[step] = []
     return options_per_step
+
+def create_datafile(csv_dir: str, datafile: str, config: Dict[str,Any]) -> None:
+    """Converts a folder of CSV data into a datafile 
+    
+    csv_dir: str
+        path to csv directory
+    datafile: str
+        name of datafile save location
+    config: Dict[str,Any]
+        otoole configuration data
+    """
+    reader = ReadCsv(user_config=config)
+    writer = WriteDatafile(user_config=config)
+    converter = Context(read_strategy=reader, write_strategy=writer)
+    converter.convert(csv_dir, datafile)
+    
