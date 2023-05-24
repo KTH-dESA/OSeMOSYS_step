@@ -101,12 +101,24 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     mu.copy_reference_option_data(src_dir=data_dir, dst_dir=data_dir, options_per_step=step_options)
 
     ##########################################################################
-    # Create MathProg datafiles 
+    # Apply options to input data
     ##########################################################################
-
+    
+    
+ 
+    ##########################################################################
+    # Loop over steps
+    ##########################################################################
+ 
     csv_dirs = mu.get_option_combinations_per_step(step_options)
     otoole_config = utils.read_otoole_config(Path("..", "data", "config.yaml"))
     for step, options in csv_dirs.items():
+        
+ 
+        ######################################################################
+        # Create Datafile(s)
+        ######################################################################
+
         if not options:
             csvs = Path("..", "data", f"step_{step}")
             datafile = Path("..", "steps", f"step_{step}", "data.txt")
@@ -121,6 +133,15 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 datafile = datafile.joinpath("data.txt")
                 mu.create_datafile(csvs, datafile, otoole_config)
 
+        ######################################################################
+        # Solve the model 
+        ######################################################################
+        
+        
+        
+        ######################################################################
+        # Results to next step 
+        ######################################################################
 
 """
 
