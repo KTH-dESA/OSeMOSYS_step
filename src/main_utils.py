@@ -4,9 +4,9 @@ from typing import Dict, List, Tuple, Any
 import pandas as pd
 import os
 from pathlib import Path
-import itertools
 import logging
 import utils
+import subprocess
 from otoole import WriteDatafile
 from otoole import ReadCsv
 from otoole import Context
@@ -41,7 +41,7 @@ def get_step_data(scenaro_path: str) -> Dict[int, Dict[str, pd.DataFrame]]:
     """
     steps = next(os.walk(scenaro_path))[1] # returns subdirs in scenarios/
     scenarios_per_step = {}
-    for _, step_num in enumerate(steps):
+    for step_num in steps:
         step_path = Path(scenaro_path, step_num)
         scenario_data = {}
         for _, _, files in os.walk(str(step_path)):
@@ -49,7 +49,7 @@ def get_step_data(scenaro_path: str) -> Dict[int, Dict[str, pd.DataFrame]]:
         for scenario in scenarios:
             # the -4 removes the .csv
             scenario_data[scenario[:-4]] = pd.read_csv(Path(step_path, scenario))
-        scenarios_per_step[step_num] = scenario_data
+        scenarios_per_step[int(step_num)] = scenario_data
         
     return scenarios_per_step
 
@@ -143,48 +143,11 @@ def get_option_data(steps: Dict[int, Dict[str, pd.DataFrame]]) -> Dict[str, pd.D
     """
     
     option_data = {}
-    
     for step, scenarios in steps.items():
         for scenario, df in scenarios.items():
             for option in df['OPTION'].unique():
                 option_data[f"{scenario}{option}"] = df.loc[df["OPTION"] == option].reset_index(drop=True)
     return option_data
-
-def get_option_data_per_step(steps: Dict[int, Dict[str, pd.DataFrame]]) -> Dict[str, pd.DataFrame]:
-    """Gets option data at step level
-    
-    Args: 
-        steps: Dict[int, Dict[str, pd.DataFrame]]
-            steps dictionary 
-    
-    Returns: 
-        Dict[str, pd.DataFrame]
-
-    Example: 
-        >>> get_option_data(steps)
-        >>> {
-            A0-B0: pd.DataFrame,
-            A1-B0: pd.DataFrame,
-            A0-B1: pd.DataFrame,
-            A1-B1: pd.DataFrame,
-        }
-    """
-    option_data = get_option_data(steps) # data for each option (A0, A1, B0, B1)
-    option_data_per_step = {}
-    
-    for step, scenarios in steps.items():
-        num_scenarins = len(scenarios)
-        options = get_options_per_scenario(scenarios) # (A0, A1, B0, B1)
-        combinations = itertools.combinations(options, num_scenarins) # [(A0, A1), (A0, B0), (A0, B1), (A1, B0), (A1, B1)]
-        combinations = remove_duplicate_combinations(combinations)# [(A0, B0), (A0, B1), (A1, B0), (A1, B1)]
-        dfs = []
-        for options in combinations: # (A0, B0)
-            for option in options: # A0
-                dfs.append(option_data[option])
-            name = "".join(options)
-            option_data_per_step[name] = pd.concat(dfs)
-                
-    return option_data_per_step
     
 def remove_duplicate_combinations(options: List[Tuple]) -> List[Tuple]:
     """Removes duplicate options from each step
@@ -397,7 +360,7 @@ def apply_option(df: pd.DataFrame, option: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def add_missing_steps(options_per_step: Dict[int, List[str]], max_step: int):
+def add_missing_steps(options_per_step: Dict[int, List[str]], max_step: int) -> Dict[int, List[str]]:
     """Adds missing step information
     
     Args:
@@ -422,15 +385,113 @@ def add_missing_steps(options_per_step: Dict[int, List[str]], max_step: int):
 def create_datafile(csv_dir: str, datafile: str, config: Dict[str,Any]) -> None:
     """Converts a folder of CSV data into a datafile 
     
-    csv_dir: str
-        path to csv directory
-    datafile: str
-        name of datafile save location
-    config: Dict[str,Any]
-        otoole configuration data
+    Args:
+        csv_dir: str
+            path to csv directory
+        datafile: str
+            name of datafile save location
+        config: Dict[str,Any]
+            otoole configuration data
     """
     reader = ReadCsv(user_config=config)
     writer = WriteDatafile(user_config=config)
     converter = Context(read_strategy=reader, write_strategy=writer)
     converter.convert(csv_dir, datafile)
+    
+def get_option_data_per_step(steps: Dict[int, Dict[str, pd.DataFrame]]) -> Dict[int, Dict[str, pd.DataFrame]]:
+    """Gets option data at a step level.
+    
+    Args:
+        steps: Dict[int, Dict[str, pd.DataFrame]]
+            Data at a step level - see get_step_data(scenaro_path: str)
+            
+    Returns:
+        Dict[int, Dict[str, pd.DataFrame]]
+            Data at a step level, parsed by option 
+            
+    Example:
+        >>> get_options_per_step(
+                1:{A:pd.DataFrame, B:pd.DataFrame},
+                2:{C:pd.DataFrame}
+            )
+        >>> {1: 
+                {
+                    A0: pd.DataFrame,
+                    A1: pd.DataFrame,
+                    B0: pd.DataFrame,
+                }
+            2: 
+                {
+                    B0: pd.DataFrame,
+                    B1: pd.DataFrame,
+                }
+            }
+        
+    """
+    step_option_data = {}
+    for step, step_data in steps.items():
+        step_option_data[step] = {}
+        for scenario, scenario_data in step_data.items():
+            options = scenario_data["OPTION"].unique()
+            for option in options:
+                df = scenario_data.loc[scenario_data["OPTION"] == option].reset_index(drop=True)
+                step_option_data[step][f"{scenario}{option}"] = df
+    return step_option_data
+
+def get_param_data_per_option(step_option_data: Dict[int, Dict[str, pd.DataFrame]]) -> Dict[int, Dict[str, Dict[str, pd.DataFrame]]]:
+    """Gets param data for each option at a step level
+    
+    Args:
+        step_option_data: Dict[int, Dict[str, pd.DataFrame]]
+            Option data at a step level -> see get_options_per_step()
+            
+    Returns: 
+        Dict[int, Dict[str, Dict[str, pd.DataFrame]]]
+            Param data per option per step
+            
+    Example: 
+        >>> get_param_data_per_option()
+        >>> {1: {A0: {TotalAnnualMaxCapacity: pd.DataFrame, TotalAnnualMaxCapacityInvestment: pd.DataFrame}}}
+    """
+
+    param_per_option_per_step_data = {}
+    for step, option in step_option_data.items():
+        param_per_option_per_step_data[step] = {}
+        for option_name, option_data in option.items():
+            params = option_data["PARAMETER"].unique()
+            options = option_data["OPTION"].unique()
+            for option in options:
+                if not option_name.endswith(str(option)):
+                    continue
+                param_per_option_per_step_data[step][option] = {}
+                for param in params:
+                    df = option_data.drop(columns=["PARAMETER", "OPTION"])
+                    param_per_option_per_step_data[step][option][param] = df
+    return param_per_option_per_step_data
+
+def create_lp(datafile: str, lp_file: str, osemosys: str) -> int:
+    """Create the LP file using GLPK
+    
+    Args: 
+       datafile: str, 
+       lp_file: str, 
+       osemosys: str 
+       
+    Returns:
+        0: int
+            If successful 
+        1: int
+            If not successful
+    """
+    cmd = f"glpsol -m {osemosys} -d {datafile} --wlp {lp_file} --check"
+
+    subprocess.run(cmd, shell = True, capture_output = True)
+    
+    if not os.path.exists(lp_file):
+        logger.warning(f"Can not create {lp_file}")
+        return 1
+    else:
+        return 0
+        
+    
     

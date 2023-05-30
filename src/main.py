@@ -11,24 +11,19 @@ be indicate in the following way 'solver=gurobi'
 
 import click
 import data_split as ds
-import itertools
-# import main_step as ms
-# import new_scen as ns
 import os
 from pathlib import Path
 import pandas as pd
-# import results_to_next_step as rtns
 import shutil
-# import step_to_final as stf
-# import subprocess as sp
 from typing import Dict, List
 import utils
 import main_utils as mu
+import preprocess_data 
+import solve
 
 import logging
 
-# logger = logging.getLogger(__name__)
-# path_log = os.path.join('results','osemosys_step.log')
+
 path_log = os.path.join('..','results','osemosys_step.log')
 logging.basicConfig(filename=path_log, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -104,7 +99,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     # Apply options to input data
     ##########################################################################
     
-    
+    step_option_data = mu.get_option_data_per_step(steps) # {int, Dict[str, pd.DataFrame]}
+    step_option_data_by_param = mu.get_param_data_per_option(step_option_data) # Dict[int, Dict[str, Dict[str, pd.DataFrame]]]
  
     ##########################################################################
     # Loop over steps
@@ -114,9 +110,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     otoole_config = utils.read_otoole_config(Path("..", "data", "config.yaml"))
     for step, options in csv_dirs.items():
         
- 
         ######################################################################
-        # Create Datafile(s)
+        # Create Datafile
         ######################################################################
 
         if not options:
@@ -134,14 +129,80 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 mu.create_datafile(csvs, datafile, otoole_config)
 
         ######################################################################
+        # Preprocess Datafile
+        ######################################################################
+
+        preprocess_data.main("otoole", datafile, datafile)
+
+        ######################################################################
+        # Create LP file 
+        ######################################################################
+
+        osemosys_file = Path("..", "model", "osemosys.txt")
+        failed_lps = []
+
+        if not options:
+            lp_file = Path("..", "steps", f"step_{step}", "model.lp")
+            exit_code = mu.create_lp(str(datafile), str(lp_file), str(osemosys_file))
+            if exit_code == 1:
+                failed_lps.append(lp_file)
+        else:
+            for option in options:
+                lp_file = Path("..", "steps", f"step_{step}")
+                for each_option in option:
+                    lp_file = lp_file.joinpath(each_option)
+                lp_file = lp_file.joinpath("model.lp")
+                exit_code = mu.create_lp(str(datafile), str(lp_file), str(osemosys_file))
+                if exit_code == 1:
+                    failed_lps.append(lp_file)
+
+        ######################################################################
+        # Remove failed builds 
+        ######################################################################
+
+        for failed_lp in failed_lps:
+            directory_path = Path(failed_lp).parent
+            if os.path.exists(str(directory_path)):
+                shutil.rmtree(str(directory_path))
+
+        ######################################################################
         # Solve the model 
         ######################################################################
         
+        failed_sols = []
         
+        if not options:
+            lp_file = Path("..", "steps", f"step_{step}", "model.lp")
+            sol_dir = Path("..", "steps", f"step_{step}")
+            exit_code = solve.solve(str(lp_file), str(sol_dir), solver)
+            if exit_code == 1:
+                failed_sols.append(sol_dir)
+        else:
+            for option in options:
+                lp_file = Path("..", "steps", f"step_{step}")
+                for each_option in option:
+                    lp_file = lp_file.joinpath(each_option)
+                lp_file = lp_file.joinpath("model.lp")
+                exit_code = solve.solve(str(lp_file), str(sol_dir), solver)
+                if exit_code == 1:
+                    failed_sols.append(sol_dir)
         
+        ######################################################################
+        # Remove failed solves 
+        ######################################################################
+
+        # if failed, remove directory 
+        # if success, remove the .txt and .lp file from the results 
+
+        ######################################################################
+        # Generate result CSVs
+        ######################################################################
+ 
         ######################################################################
         # Results to next step 
         ######################################################################
+
+        
 
 """
 
