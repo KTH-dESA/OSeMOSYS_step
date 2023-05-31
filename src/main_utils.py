@@ -469,29 +469,36 @@ def get_param_data_per_option(step_option_data: Dict[int, Dict[str, pd.DataFrame
                     param_per_option_per_step_data[step][option][param] = df
     return param_per_option_per_step_data
 
-def create_lp(datafile: str, lp_file: str, osemosys: str) -> int:
-    """Create the LP file using GLPK
-    
-    Args: 
-       datafile: str, 
-       lp_file: str, 
-       osemosys: str 
-       
-    Returns:
-        0: int
-            If successful 
-        1: int
-            If not successful
-    """
-    cmd = f"glpsol -m {osemosys} -d {datafile} --wlp {lp_file} --check"
-
-    subprocess.run(cmd, shell = True, capture_output = True)
-    
-    if not os.path.exists(lp_file):
-        logger.warning(f"Can not create {lp_file}")
-        return 1
-    else:
-        return 0
+def results_to_next_step(next_step: int, option_path: str, parameter: str):
+    #dp_path = '../tests/fixtures/data' #for testing
+    #fr_path = '../tests/fixtures/results' #for testing
+    rc_path = os.path.join(dp_path,'ResidualCapacity.csv')
+    ol_path = os.path.join(dp_path,'OperationalLife.csv')
+    nc_path = os.path.join(fr_path,'res','NewCapacity.csv')
+    yr_path = os.path.join(dp_path,'YEAR.csv')
+    df_init = pd.read_csv(rc_path)
+    df_ol = pd.read_csv(ol_path)
+    df_nc = pd.read_csv(nc_path)
+    df_yr = pd.read_csv(yr_path)
+    df_out = df_init
+    tec = pd.Series(df_init['TECHNOLOGY'].unique())
+    tec = tec.append(pd.Series(df_nc['TECHNOLOGY'][~df_nc.TECHNOLOGY.isin(tec)].unique()),ignore_index=True)
+    tec = tec[tec.isin(df_ol['TECHNOLOGY'])]
+    for r in df_nc['REGION'].unique():
+        for t in tec:
+            for y in df_yr['VALUE']:
+                df = df_nc
+                df = df[df['TECHNOLOGY']==t]
+                ol = df_ol.loc[df_ol.loc[df_ol['TECHNOLOGY']==t].index[0],'VALUE']
+                df = df[((y+1)>df['YEAR'])&(df['YEAR']>(y-ol))]
+                if len(df_out[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)]) > 0 :
+                    i = df_out.loc[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)].index[0]
+                    df_out.loc[i,'VALUE'] = df_out.loc[i,'VALUE'] + df['VALUE'].sum()
+                else:
+                    df_out = df_out.append(pd.DataFrame([[r,t,y,df['VALUE'].sum()]],columns=['REGION','TECHNOLOGY','YEAR', 'VALUE']),ignore_index=True)
+    df_out = df_out.round({'VALUE':4})
+    df_out.to_csv(rc_path,index=False)
+    return
         
     
     

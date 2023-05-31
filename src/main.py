@@ -108,6 +108,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
  
     csv_dirs = mu.get_option_combinations_per_step(step_options)
     otoole_config = utils.read_otoole_config(Path("..", "data", "config.yaml"))
+    
     for step, options in csv_dirs.items():
         
         ######################################################################
@@ -143,7 +144,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
 
         if not options:
             lp_file = Path("..", "steps", f"step_{step}", "model.lp")
-            exit_code = mu.create_lp(str(datafile), str(lp_file), str(osemosys_file))
+            exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
             if exit_code == 1:
                 failed_lps.append(lp_file)
         else:
@@ -152,7 +153,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 for each_option in option:
                     lp_file = lp_file.joinpath(each_option)
                 lp_file = lp_file.joinpath("model.lp")
-                exit_code = mu.create_lp(str(datafile), str(lp_file), str(osemosys_file))
+                exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
                 if exit_code == 1:
                     failed_lps.append(lp_file)
 
@@ -180,6 +181,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         else:
             for option in options:
                 lp_file = Path("..", "steps", f"step_{step}")
+                sol_dir = Path("..", "steps", f"step_{step}")
                 for each_option in option:
                     lp_file = lp_file.joinpath(each_option)
                 lp_file = lp_file.joinpath("model.lp")
@@ -188,21 +190,59 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     failed_sols.append(sol_dir)
         
         ######################################################################
-        # Remove failed solves 
+        # Remove failed builds 
         ######################################################################
 
-        # if failed, remove directory 
-        # if success, remove the .txt and .lp file from the results 
+        for failed_sol in failed_sols:
+            directory_path = Path(failed_sol).parent
+            if os.path.exists(str(directory_path)):
+                shutil.rmtree(str(directory_path))
 
         ######################################################################
         # Generate result CSVs
         ######################################################################
  
+        if not solver:
+            pass
+        elif not options:
+            sol_dir = Path("..", "steps", f"step_{step}")
+            if os.path.exists(str(sol_dir)):
+                solve.generate_results(str(sol_dir), solver)
+        else:
+            for option in options:
+                sol_dir = Path("..", "steps", f"step_{step}")
+                for each_option in option:
+                    sol_dir = sol_dir.joinpath(each_option)
+                if os.path.exists(str(sol_dir)):
+                    solve.generate_results(str(sol_dir), solver)
+ 
         ######################################################################
         # Results to next step 
         ######################################################################
 
+        # check for last step 
+        next_step = step + 1
+        if next_step > num_steps:
+            continue
         
+        elif not options:
+            sol_dir = Path("..", "steps", f"step_{step}")
+            if os.path.exists(str(sol_dir)):
+                mu.results_to_next_step()
+                
+        else:
+            for option in options:
+                sol_dir = Path("..", "steps", f"step_{step}")
+                for each_option in option:
+                    sol_dir = sol_dir.joinpath(each_option)
+                if os.path.exists(str(sol_dir)):
+                    mu.results_to_next_step()
+
+    ######################################################################
+    # Stitch Results together 
+    ######################################################################
+
+    
 
 """
 
