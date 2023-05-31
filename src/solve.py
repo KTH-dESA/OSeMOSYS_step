@@ -106,13 +106,13 @@ def generate_results(sol_file: str, solver: str, config: Dict[str,Any]) -> None:
     sol_dir = Path(sol_file).parent
     
     if solver == "gurobi":
-        reader = ReadGurobi(user_config=config)
+        reader = ReadGurobi(user_config = config)
     elif solver == "cplex":
-        reader = ReadCplex(user_config=config)
+        reader = ReadCplex(user_config = config)
     elif solver == "cbc":
-        reader = ReadCbc(user_config=config)
-    writer = WriteCsv(user_config=config)
-    converter = Context(read_strategy=reader, write_strategy=writer)
+        reader = ReadCbc(user_config = config)
+    writer = WriteCsv(user_config = config)
+    converter = Context(read_strategy = reader, write_strategy = writer)
     
     converter.convert(sol_file, str(sol_dir))
     

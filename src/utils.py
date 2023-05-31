@@ -57,4 +57,24 @@ def copy_csvs(src: str, dst: str) -> None:
         source_file = os.path.join(src, f)
         dst_file = os.path.join(dst, f)
         shutil.copy(source_file, dst_file)
-    
+        
+def get_subdirectories(directory: str):
+    """Gets all subdirectories"""
+    subdirectories = []
+    directory_path = Path(directory)
+    for path in directory_path.iterdir():
+        if path.is_dir():
+            if check_for_subdirectory(str(path)):
+                subdirectories.extend(get_subdirectories(path))
+            else:
+                subdirectories.append(path)
+            
+    return subdirectories
+
+def check_for_subdirectory(directory: str):
+    """Checks if there is a subdirectory present"""
+    directory_path = Path(directory)
+    for path in directory_path.iterdir():
+        if path.is_dir():
+            return True
+    return False

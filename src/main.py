@@ -100,7 +100,35 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     ##########################################################################
     
     step_option_data = mu.get_option_data_per_step(steps) # {int, Dict[str, pd.DataFrame]}
-    step_option_data_by_param = mu.get_param_data_per_option(step_option_data) # Dict[int, Dict[str, Dict[str, pd.DataFrame]]]
+    option_data_by_param = mu.get_param_data_per_option(step_option_data) # Dict[str, Dict[str, pd.DataFrame]]
+    
+    for step_num in range(num_steps):
+        step_dir_number = Path(data_dir, f"step_{step_num}")
+        
+        # get grouped list of options to apply - ie. [A0-B1, C0]
+        
+        for option_dir in utils.get_subdirectories(str(step_dir_number)):
+            grouped_options_to_apply = Path(option_dir).parts
+            parsed_options_to_apply = []
+            
+            # get parsed list of options to apply - ie. [A0, B1, C0]
+            
+            for grouped_option_to_apply in grouped_options_to_apply:
+                if grouped_option_to_apply in ["..", "data", f"step_{step_num}"]:
+                    continue
+                parsed_options = grouped_option_to_apply.split("-")
+                for parsed_option_to_apply in parsed_options:
+                    parsed_options_to_apply.append(parsed_option_to_apply)
+            
+            # parsed_options_to_apply = [A0, B1, C0] at this point 
+            
+            for option_to_apply in parsed_options_to_apply:
+                for param, param_data in option_data_by_param[option_to_apply].items():
+                    path_to_data = Path(option_dir, f"{param}.csv")
+                    original = pd.read_csv(path_to_data)
+                    param_data_year_filtered = param_data.loc[param_data["YEAR"].isin(years_per_step[step_num])].reset_index(drop=True)
+                    new = mu.apply_option_data(original, param_data_year_filtered)
+                    new.to_csv(path_to_data)
  
     ##########################################################################
     # Loop over steps

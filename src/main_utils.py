@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import logging
 import utils
-import subprocess
+import sys
 from otoole import WriteDatafile
 from otoole import ReadCsv
 from otoole import Context
@@ -422,8 +422,8 @@ def get_option_data_per_step(steps: Dict[int, Dict[str, pd.DataFrame]]) -> Dict[
                 }
             2: 
                 {
-                    B0: pd.DataFrame,
-                    B1: pd.DataFrame,
+                    C0: pd.DataFrame,
+                    C1: pd.DataFrame,
                 }
             }
         
@@ -438,7 +438,8 @@ def get_option_data_per_step(steps: Dict[int, Dict[str, pd.DataFrame]]) -> Dict[
                 step_option_data[step][f"{scenario}{option}"] = df
     return step_option_data
 
-def get_param_data_per_option(step_option_data: Dict[int, Dict[str, pd.DataFrame]]) -> Dict[int, Dict[str, Dict[str, pd.DataFrame]]]:
+
+def get_param_data_per_option(step_option_data: Dict[int, Dict[str, pd.DataFrame]]) -> Dict[str, Dict[str, pd.DataFrame]]:
     """Gets param data for each option at a step level
     
     Args:
@@ -446,59 +447,98 @@ def get_param_data_per_option(step_option_data: Dict[int, Dict[str, pd.DataFrame
             Option data at a step level -> see get_options_per_step()
             
     Returns: 
-        Dict[int, Dict[str, Dict[str, pd.DataFrame]]]
+        Dict[str, Dict[str, pd.DataFrame]]
             Param data per option per step
             
     Example: 
         >>> get_param_data_per_option()
-        >>> {1: {A0: {TotalAnnualMaxCapacity: pd.DataFrame, TotalAnnualMaxCapacityInvestment: pd.DataFrame}}}
+        >>> {A0: {TotalAnnualMaxCapacity: pd.DataFrame, TotalAnnualMaxCapacityInvestment: pd.DataFrame}}
     """
 
-    param_per_option_per_step_data = {}
-    for step, option in step_option_data.items():
-        param_per_option_per_step_data[step] = {}
+    param_per_option = {}
+    for _, option in step_option_data.items():
         for option_name, option_data in option.items():
             params = option_data["PARAMETER"].unique()
-            options = option_data["OPTION"].unique()
-            for option in options:
-                if not option_name.endswith(str(option)):
+            option_values = option_data["OPTION"].unique()
+            for option_value in option_values: # as listed in the actual df
+                if not option_name.endswith(str(option_value)):
                     continue
-                param_per_option_per_step_data[step][option] = {}
+                param_per_option[option_name] = {}
                 for param in params:
-                    df = option_data.drop(columns=["PARAMETER", "OPTION"])
-                    param_per_option_per_step_data[step][option][param] = df
-    return param_per_option_per_step_data
+                    df = option_data.drop(columns = ["PARAMETER", "OPTION"])
+                    param_per_option[option_name][param] = df
+    return param_per_option
 
-def results_to_next_step(next_step: int, option_path: str, parameter: str):
+def apply_option_data(original: pd.DataFrame, option: pd.DataFrame) -> pd.DataFrame:
+    """Overwrites original dataframe values with option values
+    
+    Args:
+        original: pd.DataFrame
+            original dataframe to be modified 
+        option: pd.DataFrame
+            option dataframe
+            
+    Returns:
+        pd.DataFrame
+            dataframe with option values applied 
+    """
+    # to_apply = option.drop(columns=["PARAMETER", "OPTION"])
+    if not (original.columns.to_list()) == (option.columns.to_list()):
+        logger.error(f"columns for original are {original.columns} and columns to apply are {option.columns}")
+        sys.exit()
+    option = option[list(original)] # align column headers
+    df = pd.concat([original, option])
+    df = df.drop_duplicates(keep="last").reset_index(drop=True)
+    return df
+
+def results_to_next_step(year: pd.DataFrame, op_life: pd.DataFrame, new_capacity: pd.DataFrame, res_capacity: pd.DataFrame) -> pd.DataFrame:
+    """Passes results from one step to the next 
+    
+    Args:
+        year: pd.DataFrame
+            From Current Step 
+        op_life: pd.DataFrame,
+            From Current Step 
+        new_capacity: pd.DataFrame,
+            From Current Step 
+        res_capacity: pd.DataFrame,
+            From NEXT Step 
+    
+    Returns: 
+        pd.DataFrame
+            Updated residual capacity for next step 
+    """
+    
     #dp_path = '../tests/fixtures/data' #for testing
     #fr_path = '../tests/fixtures/results' #for testing
-    rc_path = os.path.join(dp_path,'ResidualCapacity.csv')
-    ol_path = os.path.join(dp_path,'OperationalLife.csv')
-    nc_path = os.path.join(fr_path,'res','NewCapacity.csv')
-    yr_path = os.path.join(dp_path,'YEAR.csv')
-    df_init = pd.read_csv(rc_path)
-    df_ol = pd.read_csv(ol_path)
-    df_nc = pd.read_csv(nc_path)
-    df_yr = pd.read_csv(yr_path)
-    df_out = df_init
-    tec = pd.Series(df_init['TECHNOLOGY'].unique())
-    tec = tec.append(pd.Series(df_nc['TECHNOLOGY'][~df_nc.TECHNOLOGY.isin(tec)].unique()),ignore_index=True)
-    tec = tec[tec.isin(df_ol['TECHNOLOGY'])]
-    for r in df_nc['REGION'].unique():
-        for t in tec:
-            for y in df_yr['VALUE']:
-                df = df_nc
-                df = df[df['TECHNOLOGY']==t]
-                ol = df_ol.loc[df_ol.loc[df_ol['TECHNOLOGY']==t].index[0],'VALUE']
-                df = df[((y+1)>df['YEAR'])&(df['YEAR']>(y-ol))]
-                if len(df_out[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)]) > 0 :
-                    i = df_out.loc[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)].index[0]
-                    df_out.loc[i,'VALUE'] = df_out.loc[i,'VALUE'] + df['VALUE'].sum()
-                else:
-                    df_out = df_out.append(pd.DataFrame([[r,t,y,df['VALUE'].sum()]],columns=['REGION','TECHNOLOGY','YEAR', 'VALUE']),ignore_index=True)
-    df_out = df_out.round({'VALUE':4})
-    df_out.to_csv(rc_path,index=False)
-    return
+    # rc_path = os.path.join(dp_path,'ResidualCapacity.csv')
+    # ol_path = os.path.join(dp_path,'OperationalLife.csv')
+    # nc_path = os.path.join(fr_path,'res','NewCapacity.csv')
+    # yr_path = os.path.join(dp_path,'YEAR.csv')
+    # df_init = pd.read_csv(rc_path)
+    # df_ol = pd.read_csv(ol_path)
+    # df_nc = pd.read_csv(nc_path)
+    # df_yr = pd.read_csv(yr_path)
+    # df_out = df_init
+    # tec = pd.Series(df_init['TECHNOLOGY'].unique())
+    # tec = tec.append(pd.Series(df_nc['TECHNOLOGY'][~df_nc.TECHNOLOGY.isin(tec)].unique()),ignore_index=True)
+    # tec = tec[tec.isin(df_ol['TECHNOLOGY'])]
+    # for r in df_nc['REGION'].unique():
+    #     for t in tec:
+    #         for y in df_yr['VALUE']:
+    #             df = df_nc
+    #             df = df[df['TECHNOLOGY']==t]
+    #             ol = df_ol.loc[df_ol.loc[df_ol['TECHNOLOGY']==t].index[0],'VALUE']
+    #             df = df[((y+1)>df['YEAR'])&(df['YEAR']>(y-ol))]
+    #             if len(df_out[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)]) > 0 :
+    #                 i = df_out.loc[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)].index[0]
+    #                 df_out.loc[i,'VALUE'] = df_out.loc[i,'VALUE'] + df['VALUE'].sum()
+    #             else:
+    #                 df_out = df_out.append(pd.DataFrame([[r,t,y,df['VALUE'].sum()]],columns=['REGION','TECHNOLOGY','YEAR', 'VALUE']),ignore_index=True)
+    # df_out = df_out.round({'VALUE':4})
+    # df_out.to_csv(rc_path,index=False)
+    # return
+    pass
         
     
     
