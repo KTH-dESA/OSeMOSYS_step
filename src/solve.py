@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def solve(lp_file: str, sol_dir: str, solver: Union[str, None]) -> int:
     """Calls solving logic"""
-    
+    print(f"Solving {lp_file}")
     if not solver:
         exit_code = solve_glpk(lp_file, sol_dir)
     elif solver == "gurobi":
@@ -44,7 +44,17 @@ def solve_glpk(lp_file: str, sol_dir: str) -> int:
         1: int
             If not successful
     """
-    pass
+    
+    cmd = f"cd {sol_dir} && glpsol --lp {lp_file}"
+    
+    subprocess.run(cmd, shell = True, capture_output = True)
+    
+    if not Path(sol_dir, "RateOfActivity.csv").exists():
+        logger.error(f"Can not solve {lp_file}")
+        return 1
+    else:
+        return 0
+    
 
 def solve_cbc(lp_file: str, sol_file: str) -> int:
     """Solves using CBC

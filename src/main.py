@@ -26,7 +26,7 @@ import logging
 
 
 path_log = os.path.join('..','results','osemosys_step.log')
-logging.basicConfig(filename=path_log, level=logging.INFO)
+logging.basicConfig(filename=path_log, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 @click.command()
