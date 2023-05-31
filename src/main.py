@@ -20,6 +20,7 @@ import utils
 import main_utils as mu
 import preprocess_data 
 import solve
+from tqdm import trange, tqdm
 
 import logging
 
@@ -101,8 +102,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     
     step_option_data = mu.get_option_data_per_step(steps) # {int, Dict[str, pd.DataFrame]}
     option_data_by_param = mu.get_param_data_per_option(step_option_data) # Dict[str, Dict[str, pd.DataFrame]]
-    
-    for step_num in range(num_steps):
+
+    for step_num in trange(0, num_steps, desc="Applying scenario Data", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
         step_dir_number = Path(data_dir, f"step_{step_num}")
         
         # get grouped list of options to apply - ie. [A0-B1, C0]
@@ -120,7 +121,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 for parsed_option_to_apply in parsed_options:
                     parsed_options_to_apply.append(parsed_option_to_apply)
             
-            # parsed_options_to_apply = [A0, B1, C0] at this point 
+            #  at this point, parsed_options_to_apply = [A0, B1, C0]
             
             for option_to_apply in parsed_options_to_apply:
                 for param, param_data in option_data_by_param[option_to_apply].items():
@@ -128,7 +129,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     original = pd.read_csv(path_to_data)
                     param_data_year_filtered = param_data.loc[param_data["YEAR"].isin(years_per_step[step_num])].reset_index(drop=True)
                     new = mu.apply_option_data(original, param_data_year_filtered)
-                    new.to_csv(path_to_data)
+                    new.to_csv(path_to_data, index=False)
  
     ##########################################################################
     # Loop over steps
@@ -137,7 +138,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     csv_dirs = mu.get_option_combinations_per_step(step_options)
     otoole_config = utils.read_otoole_config(Path("..", "data", "config.yaml"))
     
-    for step, options in csv_dirs.items():
+    for step, options in tqdm(csv_dirs.items(), total=len(csv_dirs), desc="Building and Solving Models", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
         
         ######################################################################
         # Create Datafile

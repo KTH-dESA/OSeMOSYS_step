@@ -482,13 +482,15 @@ def apply_option_data(original: pd.DataFrame, option: pd.DataFrame) -> pd.DataFr
         pd.DataFrame
             dataframe with option values applied 
     """
-    # to_apply = option.drop(columns=["PARAMETER", "OPTION"])
     if not (original.columns.to_list()) == (option.columns.to_list()):
         logger.error(f"columns for original are {original.columns} and columns to apply are {option.columns}")
+        logger.error("Exiting...")
         sys.exit()
     option = option[list(original)] # align column headers
     df = pd.concat([original, option])
-    df = df.drop_duplicates(keep="last").reset_index(drop=True)
+    subset = list(df)
+    subset.remove("VALUE") # For dropping duplicates
+    df = df.drop_duplicates(keep="last", subset=subset).reset_index(drop=True)
     return df
 
 def results_to_next_step(year: pd.DataFrame, op_life: pd.DataFrame, new_capacity: pd.DataFrame, res_capacity: pd.DataFrame) -> pd.DataFrame:
