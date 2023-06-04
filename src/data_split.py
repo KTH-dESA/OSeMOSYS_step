@@ -102,7 +102,7 @@ def split_data(datafile: str, step_size: List[int]) -> Tuple[Dict, int]:
     
     # Create folder of csvs from datafile
     csv_dir = Path(data_dir, "data")
-    config_path = Path(data_dir, "config.yaml")
+    config_path = Path(data_dir, "otoole_config.yaml") # chnage this to an input 
     config = utils.read_otoole_config(str(config_path))
     datafile_to_csv(str(datafile), str(csv_dir), config)
     

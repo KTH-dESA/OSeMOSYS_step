@@ -6,6 +6,7 @@ data/step*
 data/scenarios/
 data/data*/
 data/*.txt
+*.snakemake/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

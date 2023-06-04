@@ -86,7 +86,7 @@ def get_options_per_step(steps: Dict[int, Dict[str, pd.DataFrame]]) -> Dict[int,
     
     Args: 
         steps: Dict[int, Dict[str, pd.DataFrame]]
-            steps dictionary 
+            steps dictionary - output from get_step_data()
     
     Returns: 
         Dict[int, List[str]]
@@ -382,6 +382,32 @@ def add_missing_steps(options_per_step: Dict[int, List[str]], max_step: int) -> 
             options_per_step[step] = []
     return options_per_step
 
+def append_step_num_to_option(options_per_step: Dict[int, List[str]]) -> Dict[int, List[str]]:
+    """Adds the step number to uniquely identify the option
+    
+    Args: 
+        options_per_step: Dict[int, List[str]]
+            {1:[A0-B0, A0-B1, A1-B0, A1-B1], 2:[C0, C1]}
+            
+    Retuns:
+        Dict[int, List[str]]
+            {1:[1A0-1B0, 1A0-1B1, 1A1-1B0, 1A1-1B1], 2:[2C0, 2C1]}
+    """
+    output = {}
+    for step, options in options_per_step.items():
+        if not options:
+            output[step] = options
+            continue
+        new_options =[]
+        for option in options:
+            parts = option.split("-")
+            new_parts = []
+            for part in parts:
+                new_parts.append(f"{step}{part}")
+            new_options.append("-".join(new_parts))
+        output[step] = new_options
+    return output
+
 def create_datafile(csv_dir: str, datafile: str, config: Dict[str,Any]) -> None:
     """Converts a folder of CSV data into a datafile 
     
@@ -456,17 +482,17 @@ def get_param_data_per_option(step_option_data: Dict[int, Dict[str, pd.DataFrame
     """
 
     param_per_option = {}
-    for _, option in step_option_data.items():
+    for step, option in step_option_data.items():
         for option_name, option_data in option.items():
             params = option_data["PARAMETER"].unique()
             option_values = option_data["OPTION"].unique()
             for option_value in option_values: # as listed in the actual df
                 if not option_name.endswith(str(option_value)):
                     continue
-                param_per_option[option_name] = {}
+                param_per_option[f"{step}{option_name}"] = {}
                 for param in params:
                     df = option_data.drop(columns = ["PARAMETER", "OPTION"])
-                    param_per_option[option_name][param] = df
+                    param_per_option[f"{step}{option_name}"][param] = df
     return param_per_option
 
 def apply_option_data(original: pd.DataFrame, option: pd.DataFrame) -> pd.DataFrame:

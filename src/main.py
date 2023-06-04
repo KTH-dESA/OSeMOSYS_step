@@ -21,11 +21,13 @@ import main_utils as mu
 import preprocess_data 
 import solve
 from tqdm import trange, tqdm
-
+import subprocess
+import yaml
 import logging
+import sys
 
 
-path_log = os.path.join('..','results','osemosys_step.log')
+path_log = os.path.join("..", "logs", "log.log")
 logging.basicConfig(filename=path_log, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
@@ -39,7 +41,7 @@ logger = logging.getLogger(__name__)
               """)
 @click.option("--input_data", required=True, default= '../data/utopia.txt', 
               help="The path to the input datafile. relative from the src folder, e.g. '../data/utopia.txt'")
-@click.option("--solver", default=None, 
+@click.option("--solver", default="cbc", 
               help="If another solver than 'glpk' is desired please indicate the solver. [gurobi]")
 @click.option("--cores", default=1, show_default=True, 
               help="Number of cores snakemake is allowed to use.")
@@ -52,11 +54,17 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     """Main entry point for workflow"""
 
     # set up solver logs
-    path_sol_logs = os.sep.join(['..','results','solv_logs'])
+    path_sol_logs = os.sep.join(["..", "logs", "solv_logs"])
     try: 
         os.mkdir(path_sol_logs)
     except FileExistsError:
         pass
+    
+    ##########################################################################
+    # Remove previous run data
+    ##########################################################################
+    
+    subprocess.run(["cd ..", "bash clean.sh"], shell = True)
     
     ##########################################################################
     # Setup data and folder structure 
@@ -80,6 +88,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     # get option combinations per step
     step_options = mu.get_options_per_step(steps) # returns Dict[int, List[str]]
     step_options = mu.add_missing_steps(step_options, num_steps)
+    step_options = mu.append_step_num_to_option(step_options) 
     
     # create option directores in data/
     data_dir = Path("..", "data")
@@ -87,10 +96,14 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     
     # create option directories in steps/
     step_dir = Path("..", "steps")
+    if not step_dir.exists():
+        step_dir.mkdir()
     mu.create_option_directories(str(step_dir), step_options, step_directories=True)
     
     # create option directories in results/
     results_dir = Path("..", "results")
+    if not results_dir.exists():
+        results_dir.mkdir()
     mu.create_option_directories(str(results_dir), step_options, step_directories=False)
     
     # copy over step/scenario/option data
@@ -103,7 +116,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     step_option_data = mu.get_option_data_per_step(steps) # {int, Dict[str, pd.DataFrame]}
     option_data_by_param = mu.get_param_data_per_option(step_option_data) # Dict[str, Dict[str, pd.DataFrame]]
 
-    for step_num in trange(0, num_steps, desc="Applying scenario Data", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
+    for step_num in trange(0, num_steps, desc="Applying scenario Data", bar_format="{l_bar}{bar:10}{r_bar}{bar:-10b}"):
         step_dir_number = Path(data_dir, f"step_{step_num}")
         
         # get grouped list of options to apply - ie. [A0-B1, C0]
@@ -136,7 +149,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     ##########################################################################
  
     csv_dirs = mu.get_option_combinations_per_step(step_options)
-    otoole_config = utils.read_otoole_config(Path("..", "data", "config.yaml"))
+    otoole_config = utils.read_otoole_config(Path("..", "data", "otoole_config.yaml"))
     
     for step, options in tqdm(csv_dirs.items(), total=len(csv_dirs), desc="Building and Solving Models", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
         
@@ -148,6 +161,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             csvs = Path("..", "data", f"step_{step}")
             datafile = Path("..", "steps", f"step_{step}", "data.txt")
             mu.create_datafile(csvs, datafile, otoole_config)
+            preprocess_data.main("otoole", datafile, datafile)
         else:
             for option in options:
                 csvs = Path("..", "data", f"step_{step}")
@@ -157,12 +171,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     datafile = datafile.joinpath(each_option)
                 datafile = datafile.joinpath("data.txt")
                 mu.create_datafile(csvs, datafile, otoole_config)
-
-        ######################################################################
-        # Preprocess Datafile
-        ######################################################################
-
-        preprocess_data.main("otoole", datafile, datafile)
+                preprocess_data.main("otoole", datafile, datafile)
 
         ######################################################################
         # Create LP file 
@@ -173,15 +182,19 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
 
         if not options:
             lp_file = Path("..", "steps", f"step_{step}", "model.lp")
+            datafile = Path("..", "steps", f"step_{step}", "data.txt")
             exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
             if exit_code == 1:
                 failed_lps.append(lp_file)
         else:
             for option in options:
                 lp_file = Path("..", "steps", f"step_{step}")
+                datafile = Path("..", "steps", f"step_{step}") 
                 for each_option in option:
                     lp_file = lp_file.joinpath(each_option)
+                    datafile = datafile.joinpath(each_option)
                 lp_file = lp_file.joinpath("model.lp")
+                datafile = datafile.joinpath("data.txt")
                 exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
                 if exit_code == 1:
                     failed_lps.append(lp_file)
@@ -191,22 +204,37 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         ######################################################################
 
         for failed_lp in failed_lps:
+            
+            # remove the step folder 
             directory_path = Path(failed_lp).parent
-            if os.path.exists(str(directory_path)):
+            if directory_path.exists():
                 shutil.rmtree(str(directory_path))
+            
+            # remove the corresponding folder in results/
+            result_options = []
+            while directory_path.name != f"step_{step}":
+                result_options.insert(0, directory_path.name)
+                directory_path = directory_path.parent
+            result_option_path = Path(results_dir).joinpath(*result_options)
+            if result_option_path == Path("..", "results"):
+                logger.error("Top level run failed :(")
+                for item in result_option_path.glob('*'):
+                    shutil.rmtree(item)
+            elif os.path.exists(str(result_option_path)):
+                shutil.rmtree(str(result_option_path))
 
         ######################################################################
         # Solve the model 
         ######################################################################
         
-        failed_sols = []
+        # get lps to solve 
+    
+        lps_to_solve = []
         
         if not options:
             lp_file = Path("..", "steps", f"step_{step}", "model.lp")
             sol_dir = Path("..", "steps", f"step_{step}")
-            exit_code = solve.solve(str(lp_file), str(sol_dir), solver)
-            if exit_code == 1:
-                failed_sols.append(sol_dir)
+            lps_to_solve.append(str(lp_file))
         else:
             for option in options:
                 lp_file = Path("..", "steps", f"step_{step}")
@@ -214,64 +242,137 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 for each_option in option:
                     lp_file = lp_file.joinpath(each_option)
                 lp_file = lp_file.joinpath("model.lp")
-                exit_code = solve.solve(str(lp_file), str(sol_dir), solver)
-                if exit_code == 1:
-                    failed_sols.append(sol_dir)
+                lps_to_solve.append(str(lp_file))
+                
+        # create a config file for snakemake 
+        
+        config_path = Path(data_dir, "config.yaml")
+        config_data = {"files":lps_to_solve}
+        if not solver:
+            config_data["solver"] = "cbc"
+        else:
+            config_data["solver"] = solver
+        
+        if config_path.exists():
+            config_path.unlink()
+            
+        with open(str(config_path), 'w') as file:
+            yaml.dump(config_data, file)
+
+        # run snakemake 
+        
+        #######
+        # I think the multiprocessing library may be a better option then this
+        # since snakemake is a little overkill for running a single function
+        # when the goal is to just parallize multiple function calls
+        #######
+        
+        cmd = f"snakemake --cores {cores} --keep-going"
+        subprocess.run(cmd, shell = True, capture_output = True)
         
         ######################################################################
-        # Remove failed builds 
+        # Remove failed solves 
         ######################################################################
 
+        failed_sols = []
+
+        # check for solution 
+        
+        if not options:
+            sol_file = Path("..", "steps", f"step_{step}", "model.sol")
+            if not sol_file.exists():
+                failed_sols.append(str(sol_file))
+        else:
+            for option in options:
+                sol_file = Path("..", "steps", f"step_{step}")
+                for each_option in option:
+                    sol_file = sol_file.joinpath(each_option)
+                sol_file = sol_file.joinpath("model.sol")
+                if not sol_file.exists():
+                    failed_sols.append(str(sol_file))
+        
+        # remove folder if no .sol file exists
+        
         for failed_sol in failed_sols:
             directory_path = Path(failed_sol).parent
             if os.path.exists(str(directory_path)):
                 shutil.rmtree(str(directory_path))
 
+            # remove the corresponding folder in results/
+            result_options = []
+            while directory_path.name != f"step_{step}":
+                result_options.insert(0, directory_path.name)
+                directory_path = directory_path.parent
+            result_option_path = Path(results_dir).joinpath(*result_options)
+            if result_option_path == Path("..", "results"):
+                logger.error("All runs failed")
+                sys.exit("Quitting... ")
+            elif os.path.exists(str(result_option_path)):
+                shutil.rmtree(str(result_option_path))
+
         ######################################################################
         # Generate result CSVs
         ######################################################################
  
-        if not solver:
-            pass
-        elif not options:
+        if not options:
             sol_dir = Path("..", "steps", f"step_{step}")
-            if os.path.exists(str(sol_dir)):
-                solve.generate_results(str(sol_dir), solver)
+            if sol_dir.exists():
+                sol_file = Path(sol_dir, "model.sol")
+                solve.generate_results(str(sol_file), solver, otoole_config)
         else:
             for option in options:
                 sol_dir = Path("..", "steps", f"step_{step}")
                 for each_option in option:
                     sol_dir = sol_dir.joinpath(each_option)
-                if os.path.exists(str(sol_dir)):
-                    solve.generate_results(str(sol_dir), solver)
+                if sol_dir.exists():
+                    sol_file = Path(sol_dir, "model.sol")
+                    solve.generate_results(str(sol_file), solver, otoole_config)
  
         ######################################################################
-        # Results to next step 
+        # Save Results 
         ######################################################################
-
+        
+        if not options:
+            # apply data to all options
+            sol_results_dir = Path("..", "steps", f"step_{step}", "results")
+            if not sol_results_dir.exists():
+                logger.error("All runs failed")
+                sys.exit("Quitting...")
+            for subdir in utils.get_subdirectories(str(results_dir)):
+                for result_file in sol_results_dir.glob("*"):
+                    utils.merge_csvs(src=str(result_file), dst=str(Path(subdir, result_file.name)), years=years_per_step[step])
+            
+        else:
+            for option in options:
+                
+                # get top level result paths 
+                sol_results_dir = Path("..", "steps", f"step_{step}")
+                dst_results_dir = results_dir
+                
+                # apply max option level for the step 
+                for each_option in option:
+                    sol_results_dir = sol_results_dir.joinpath(each_option)
+                    dst_results_dir = dst_results_dir.joinpath(each_option)
+                    
+                # find if there are more nested options for each step
+                dst_result_subdirs = utils.get_subdirectories(str(dst_results_dir))
+                if not dst_result_subdirs:
+                    dst_result_subdirs = [dst_results_dir]
+                
+                # copy results 
+                sol_results_dir = Path(sol_results_dir, "results")
+                for result_file in sol_results_dir.glob("*"):
+                    for dst_results_dir in dst_result_subdirs:
+                        utils.merge_csvs(src=str(result_file), dst=str(Path(dst_results_dir, result_file.name)))
+    
+        ######################################################################
+        # Update data for next step
+        ######################################################################
+        
         # check for last step 
         next_step = step + 1
         if next_step > num_steps:
             continue
-        
-        elif not options:
-            sol_dir = Path("..", "steps", f"step_{step}")
-            if os.path.exists(str(sol_dir)):
-                mu.results_to_next_step()
-                
-        else:
-            for option in options:
-                sol_dir = Path("..", "steps", f"step_{step}")
-                for each_option in option:
-                    sol_dir = sol_dir.joinpath(each_option)
-                if os.path.exists(str(sol_dir)):
-                    mu.results_to_next_step()
-
-    ######################################################################
-    # Stitch Results together 
-    ######################################################################
-
-    
 
 """
 

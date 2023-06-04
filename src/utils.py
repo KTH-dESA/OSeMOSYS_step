@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path 
 from typing import Dict, Any, List
 from yaml import load 
+import pandas as pd
 from otoole.utils import UniqueKeyLoader
 
 import logging
@@ -78,3 +79,24 @@ def check_for_subdirectory(directory: str):
         if path.is_dir():
             return True
     return False
+
+def merge_csvs(src: str, dst: str, years: list[int] = None):
+    """Combines two CSVs together
+    
+    Args:
+        src: str, 
+            Source file 
+        dst: str, 
+            Destination file
+        years: list[int] = None 
+            Years to filter source over. If none, no filtering happens
+    """
+    if not Path(dst).exists():
+        shutil.copy(str(src), str(dst))
+    else:
+        df_src = pd.read_csv(str(src))
+        if years:
+            df_src = df_src.loc[df_src["YEAR"].isin(years)].reset_index(drop=True)
+        df_dst = pd.read_csv(str(dst))
+        df = pd.concat([df_src, df_dst])
+        df.to_csv(str(dst), index=False)

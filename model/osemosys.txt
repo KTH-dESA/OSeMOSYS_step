@@ -47,6 +47,12 @@ set DAYTYPE;
 set DAILYTIMEBRACKET;
 set FLEXIBLEDEMANDTYPE;
 set STORAGE;
+set MODEperTECHNOLOGY{TECHNOLOGY} within MODE_OF_OPERATION;
+set MODExTECHNOLOGYperFUELout{FUEL} within MODE_OF_OPERATION cross TECHNOLOGY;
+set MODExTECHNOLOGYperFUELin{FUEL} within MODE_OF_OPERATION cross TECHNOLOGY;
+set MODExTECHNOLOGYperSTORAGEto{STORAGE} within MODE_OF_OPERATION cross TECHNOLOGY;
+set MODExTECHNOLOGYperSTORAGEfrom{STORAGE} within MODE_OF_OPERATION cross TECHNOLOGY;
+set MODExTECHNOLOGYperEMISSION{e in EMISSION} within MODE_OF_OPERATION cross TECHNOLOGY;
 #
 #####################
 #    Parameters     #
@@ -202,28 +208,28 @@ check{r in REGION, t in TECHNOLOGY: TotalTechnologyModelPeriodActivityLowerLimit
 #
 
 ##########                       Fuel->Technology Connections         #############
-set MODExTECHNOLOGYperFUELout{f in FUEL} within MODE_OF_OPERATION cross TECHNOLOGY
-    := {m in MODE_OF_OPERATION, t in TECHNOLOGY : exists{r in REGION, y in YEAR} OutputActivityRatio[r,t,f,m,y] <> 0};
-set MODExTECHNOLOGYperFUELin{f in FUEL} within MODE_OF_OPERATION cross TECHNOLOGY
-    := {m in MODE_OF_OPERATION, t in TECHNOLOGY : exists{r in REGION, y in YEAR} InputActivityRatio[r,t,f,m,y] <> 0};
-
-set MODExTECHNOLOGYperSTORAGEto{s in STORAGE} within MODE_OF_OPERATION cross TECHNOLOGY
-    := {m in MODE_OF_OPERATION, t in TECHNOLOGY : exists{r in REGION} TechnologyToStorage[r,t,s,m] > 0};
-set MODExTECHNOLOGYperSTORAGEfrom{s in STORAGE} within MODE_OF_OPERATION cross TECHNOLOGY
-    := {m in MODE_OF_OPERATION, t in TECHNOLOGY : exists{r in REGION} TechnologyFromStorage[r,t,s,m] > 0};
+# set MODExTECHNOLOGYperFUELout{f in FUEL} within MODE_OF_OPERATION cross TECHNOLOGY
+#     := {m in MODE_OF_OPERATION, t in TECHNOLOGY : exists{r in REGION, y in YEAR} OutputActivityRatio[r,t,f,m,y] <> 0};
+# set MODExTECHNOLOGYperFUELin{f in FUEL} within MODE_OF_OPERATION cross TECHNOLOGY
+#     := {m in MODE_OF_OPERATION, t in TECHNOLOGY : exists{r in REGION, y in YEAR} InputActivityRatio[r,t,f,m,y] <> 0};
+# 
+# set MODExTECHNOLOGYperSTORAGEto{s in STORAGE} within MODE_OF_OPERATION cross TECHNOLOGY
+#     := {m in MODE_OF_OPERATION, t in TECHNOLOGY : exists{r in REGION} TechnologyToStorage[r,t,s,m] > 0};
+# set MODExTECHNOLOGYperSTORAGEfrom{s in STORAGE} within MODE_OF_OPERATION cross TECHNOLOGY
+#     := {m in MODE_OF_OPERATION, t in TECHNOLOGY : exists{r in REGION} TechnologyFromStorage[r,t,s,m] > 0};
 
 set TIMESLICEofSEASON{ls in SEASON} within TIMESLICE := {l in TIMESLICE : Conversionls[l,ls] = 1};
 set TIMESLICEofDAYTYPE{ld in DAYTYPE} within TIMESLICE := {l in TIMESLICE : Conversionld[l,ld] = 1};
 set TIMESLICEofDAILYTIMEBRACKET{lh in DAILYTIMEBRACKET} within TIMESLICE := {l in TIMESLICE : Conversionlh[l,lh] = 1};
 set TIMESLICEofSDB{ls in SEASON, ld in DAYTYPE, lh in DAILYTIMEBRACKET} within TIMESLICE := TIMESLICEofSEASON[ls] inter TIMESLICEofDAYTYPE[ld] inter TIMESLICEofDAILYTIMEBRACKET[lh];
 
-set MODExTECHNOLOGYperEMISSION{e in EMISSION} within MODE_OF_OPERATION cross TECHNOLOGY
-    := {m in MODE_OF_OPERATION, t in TECHNOLOGY : exists{r in REGION, y in YEAR} EmissionActivityRatio[r,t,e,m,y] <> 0};
-
-set MODEperTECHNOLOGY{t in TECHNOLOGY} within MODE_OF_OPERATION
-    := {m in MODE_OF_OPERATION : (exists {f in FUEL} (m, t) in MODExTECHNOLOGYperFUELout[f] union MODExTECHNOLOGYperFUELin[f]) or
-                                 (exists {s in STORAGE} (m, t) in MODExTECHNOLOGYperSTORAGEto[s] union MODExTECHNOLOGYperSTORAGEfrom[s]) or
-                                 (exists {e in EMISSION} (m, t) in MODExTECHNOLOGYperEMISSION[e])};
+# set MODExTECHNOLOGYperEMISSION{e in EMISSION} within MODE_OF_OPERATION cross TECHNOLOGY
+#     := {m in MODE_OF_OPERATION, t in TECHNOLOGY : exists{r in REGION, y in YEAR} EmissionActivityRatio[r,t,e,m,y] <> 0};
+# 
+# set MODEperTECHNOLOGY{t in TECHNOLOGY} within MODE_OF_OPERATION
+#     := {m in MODE_OF_OPERATION : (exists {f in FUEL} (m, t) in MODExTECHNOLOGYperFUELout[f] union MODExTECHNOLOGYperFUELin[f]) or
+#                                  (exists {s in STORAGE} (m, t) in MODExTECHNOLOGYperSTORAGEto[s] union MODExTECHNOLOGYperSTORAGEfrom[s]) or
+#                                  (exists {e in EMISSION} (m, t) in MODExTECHNOLOGYperEMISSION[e])};
 
 
 # set MODEperTECHNOLOGY{TECHNOLOGY} within MODE_OF_OPERATION;
