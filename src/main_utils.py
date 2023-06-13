@@ -519,54 +519,60 @@ def apply_option_data(original: pd.DataFrame, option: pd.DataFrame) -> pd.DataFr
     df = df.drop_duplicates(keep="last", subset=subset).reset_index(drop=True)
     return df
 
-def results_to_next_step(year: pd.DataFrame, op_life: pd.DataFrame, new_capacity: pd.DataFrame, res_capacity: pd.DataFrame) -> pd.DataFrame:
-    """Passes results from one step to the next 
+def get_new_capacity_lifetime(op_life: pd.DataFrame, new_capacity: pd.DataFrame) -> pd.DataFrame:
+    """Gets new capacity to apply to next steps"""
+    
+    def apply_op_life(start_year: int, technology: str, mapper: Dict[str,int]) -> List[int]:
+        """Creates a list of years to apply a capacity value to
+        
+        Args: 
+            start_year: int, 
+                start year of new capacity 
+            technology: str, 
+                technology to lookup operational life for
+            mapper: Dict[str,int]
+                technology to operational life mapper
+        Reeturns:
+            List[int]: 
+                Years that the capacity will be available for
+        """
+        try:
+            return list(range(int(start_year), int(mapper[technology]) + int(start_year), 1))
+        except KeyError:
+            return [int(start_year)] # op life of 1 year
+    
+    
+    mapper = dict(zip(op_life['TECHNOLOGY'], op_life['VALUE']))
+    regions = new_capacity["REGION"].unique()
+    
+    results = []
+    for region in regions:
+        df = new_capacity.copy()
+        df = df.loc[df["REGION"] == region].reset_index(drop=True)
+        df["YEARS_ACTIVE"] = df.apply(lambda x: apply_op_life(x["YEAR"], x["TECHNOLOGY"], mapper), axis=1)
+        df = df.explode(column=["YEARS_ACTIVE"])
+        df["YEAR"] = df["YEARS_ACTIVE"]
+        df = df.drop(columns=["YEARS_ACTIVE"])
+        results.append(df)
+    
+    df = pd.concat(results).reset_index(drop=True)
+    
+    return df[["REGION", "TECHNOLOGY", "YEAR", "VALUE"]]
+
+def merge_res_capacites(old_res_cap: pd.DataFrame, new_res_cap: pd.DataFrame) -> pd.DataFrame:
+    """Merges an exisiting residual capacity and new residual capacity dataframe
     
     Args:
-        year: pd.DataFrame
-            From Current Step 
-        op_life: pd.DataFrame,
-            From Current Step 
-        new_capacity: pd.DataFrame,
-            From Current Step 
-        res_capacity: pd.DataFrame,
-            From NEXT Step 
+        old_res_cap: pd.DataFrame
+        new_res_cap: pd.DataFrame
     
     Returns: 
-        pd.DataFrame
-            Updated residual capacity for next step 
+        pd.Dataframe
+            Residual capacity data with the values summed together 
     """
-    
-    #dp_path = '../tests/fixtures/data' #for testing
-    #fr_path = '../tests/fixtures/results' #for testing
-    # rc_path = os.path.join(dp_path,'ResidualCapacity.csv')
-    # ol_path = os.path.join(dp_path,'OperationalLife.csv')
-    # nc_path = os.path.join(fr_path,'res','NewCapacity.csv')
-    # yr_path = os.path.join(dp_path,'YEAR.csv')
-    # df_init = pd.read_csv(rc_path)
-    # df_ol = pd.read_csv(ol_path)
-    # df_nc = pd.read_csv(nc_path)
-    # df_yr = pd.read_csv(yr_path)
-    # df_out = df_init
-    # tec = pd.Series(df_init['TECHNOLOGY'].unique())
-    # tec = tec.append(pd.Series(df_nc['TECHNOLOGY'][~df_nc.TECHNOLOGY.isin(tec)].unique()),ignore_index=True)
-    # tec = tec[tec.isin(df_ol['TECHNOLOGY'])]
-    # for r in df_nc['REGION'].unique():
-    #     for t in tec:
-    #         for y in df_yr['VALUE']:
-    #             df = df_nc
-    #             df = df[df['TECHNOLOGY']==t]
-    #             ol = df_ol.loc[df_ol.loc[df_ol['TECHNOLOGY']==t].index[0],'VALUE']
-    #             df = df[((y+1)>df['YEAR'])&(df['YEAR']>(y-ol))]
-    #             if len(df_out[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)]) > 0 :
-    #                 i = df_out.loc[(df_out['TECHNOLOGY']==t)&(df_out['YEAR']==y)].index[0]
-    #                 df_out.loc[i,'VALUE'] = df_out.loc[i,'VALUE'] + df['VALUE'].sum()
-    #             else:
-    #                 df_out = df_out.append(pd.DataFrame([[r,t,y,df['VALUE'].sum()]],columns=['REGION','TECHNOLOGY','YEAR', 'VALUE']),ignore_index=True)
-    # df_out = df_out.round({'VALUE':4})
-    # df_out.to_csv(rc_path,index=False)
-    # return
-    pass
-        
-    
-    
+    if not list(old_res_cap.columns) == list(new_res_cap.columns):
+        raise ValueError("Columns name do not match")
+    df = pd.concat([old_res_cap, new_res_cap])
+    # print(df)
+    df = df.groupby(by=["REGION", "TECHNOLOGY", "YEAR"]).sum().reset_index()
+    return df

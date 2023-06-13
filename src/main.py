@@ -116,7 +116,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     step_option_data = mu.get_option_data_per_step(steps) # {int, Dict[str, pd.DataFrame]}
     option_data_by_param = mu.get_param_data_per_option(step_option_data) # Dict[str, Dict[str, pd.DataFrame]]
 
-    for step_num in trange(0, num_steps, desc="Applying scenario Data", bar_format="{l_bar}{bar:10}{r_bar}{bar:-10b}"):
+    for step_num in range(0, num_steps):
         step_dir_number = Path(data_dir, f"step_{step_num}")
         
         # get grouped list of options to apply - ie. [A0-B1, C0]
@@ -369,249 +369,82 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         # Update data for next step
         ######################################################################
         
-        # check for last step 
-        next_step = step + 1
-        if next_step > num_steps:
+        # step_num = step
+        # while step_num < num_steps:
+        #     print(step_num)
+        
+        # skip on last step
+        if step + 1 > num_steps:
             continue
-
-"""
-
-    # Step length is always the same 
-    if len(step_length) < 2:
-        
-        # modify step data based on each option
-        option_data = mu.get_option_data_per_step(steps)
-        subdirs = [str(p) for p in data_dir.glob("step*/") if p.is_dir()]
-        for subdir in subdirs:
-            dirs = mu.split_path_name(subdir)
-            if len(dirs) == 1:
-                continue
-            for dir_num, dir_name in enumerate(dirs):
-                if dir_num == 0: # skip root dir 
-                    continue
-                option = option_data[dir_name] # dir_name will be like A0B1 
-                for param in option["PARAMETER"].unique():
-                    df_name = Path(*subdirs, param, ".csv")
-                    df_ref = pd.read_csv(df_name)
-                    option_data_to_apply = option.loc[option["PARAMETER"] == param].reset_index(drop=True)
-                    df_new = mu.apply_option(df=df_ref, option=option_data_to_apply)
-                    df_new.to_csv(df_name)
-                    logger.info(f"Applied {param} option data for {dir_name}")
-        
-        # solve model 
-        if solver != None:
-            with open('snakefile_tpl.txt', 'r') as file:
-                snakefile = file.readlines()
-            line_paths = "PATHS = ['" + "',\n'".join(paths_in_step) + "']\n"
-
-            snakefile[1] = line_paths
-
-            with open('snakefile', 'w') as file:
-                file.writelines(snakefile)
             
-            cd_snakemake = "snakemake --cores %i" % cores
-            sp.run([cd_snakemake], shell=True, capture_output=True)
+        step_dir_number_data = Path(data_dir, f"step_{step}")
+        
+        if not options:
+            
+            # Get updated residual capacity values 
+            step_dir_number_results = Path(step_dir, f"step_{step}", "results")
+            old_res_cap = pd.read_csv(str(Path(step_dir_number_data, "ResidualCapacity.csv")))
+            op_life = pd.read_csv(str(Path(step_dir_number_data, "OperationalLife.csv")))
+            new_cap = pd.read_csv(str(Path(step_dir_number_results, "NewCapacity.csv")))
+            new_res_cap = mu.get_new_capacity_lifetime(op_life, new_cap)
+            res_cap = mu.merge_res_capacites(old_res_cap, new_res_cap)
+            
+            # overwrite residual capacity values for all subsequent steps
+            next_step = step + 1
+            while next_step < num_steps:
+                
+                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(years_per_step[next_step])]
+                
+                # no more res capacity to pass on
+                if step_res_cap.empty:
+                    break
+                
+                step_dir_to_update = Path(data_dir, f"step_{next_step}")
+                
+                for subdir in utils.get_subdirectories(str(step_dir_to_update)):
+                    step_res_cap.to_csv(str(Path(step_dir_to_update, "ResidualCapacity.csv")))
+                    
+                next_step += 1
 
         else:
-            i = 0
-            for path_df in paths_df_in_step:
-                ms.run_df(path_df,paths_res_in_step[i])
-                i+=1
+            
+            for option in options:
 
-                for sce in range(len(dic_scen_paths[s])):
-                    if not os.listdir(paths_res_in_step[sce]): #if scenario run failed, this removes following dependent scnearios
-                        for z in range(s+1,len(dic_scen_paths)):
-                            for x in range(len(dic_scen_paths[z])):
-                                if dic_scen_paths[z][x].split(os.sep)[3] == dic_scen_paths[s][sce].split(os.sep)[-1]:
-                                    dic_scen_paths[z][x] = 'none'
-                    else:
-                        stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
+                option_dir_data = Path(data_dir, f"step_{step}")
+                option_dir_results = Path(step_dir, f"step_{step}")
 
-            else:
-                dic_fin_res_path[s] = final_paths(dic_scen,dic_fin_res_path[s-1],s)
-                copy_fr(s,dic_scen,dic_fin_res_path[s-1])
-                i = 0
-                for sce in range(len(dic_scen_paths[s-1])):
-                    if s in dic_scen:
-                        for scn in range(len(dic_scen[s])):
-                            if dic_scen_paths[s][i] != 'none':
-                                path_dp_d = os.path.join(paths_dp_step[i],'data')
-                                rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
-                                ns.main(dic_scen_paths[s][i],s,all_scenarios[s],dic_scen[s][dic_scen_paths[s][i].split(os.sep)[-1]],dic_yr_in_steps)
-                                path_df = os.sep.join(paths_dp_step[i].split(os.sep)[:-1])+'.txt'
-                                paths_df_in_step.append(path_df)
-                                ms.dp_to_df(paths_dp_step[i],path_df)
-                                paths_res_in_step.append(dic_step_scen_paths[s][i])
-                                paths_in_step.append(os.sep.join(dic_step_scen_paths[s][i].split(os.sep)[2:]))
-
-                            i += 1
-                        shutil.rmtree(os.path.join(dic_fin_res_path[s-1][sce],'res'))
-                    else:
-                        if dic_scen_paths[s][sce] != 'none':
-                            path_dp_d = os.path.join(paths_dp_step[sce],'data')
-                            rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
-                            path_df = os.sep.join(paths_dp_step[sce].split(os.sep)[:-1])+'.txt'
-                            paths_df_in_step.append(path_df)
-                            ms.dp_to_df(paths_dp_step[sce],path_df)
-                            paths_res_in_step.append(dic_step_scen_paths[s][sce])
-                            paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
-
-                logger.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
-                logger.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
-                if solver != None:
-                    with open('snakefile_tpl.txt', 'r') as file:
-                        snakefile = file.readlines()
-                    line_paths = "PATHS = ['" + "',\n'".join(paths_in_step) + "']\n"
-
-                    snakefile[1] = line_paths
-
-                    with open('snakefile', 'w') as file:
-                        file.writelines(snakefile)
+                # apply max option level for the step 
+                for each_option in option:
+                    option_dir_data = option_dir_data.joinpath(each_option)
+                    option_dir_results = option_dir_results.joinpath(each_option)
+                option_dir_results = option_dir_results.joinpath("results")
+                
+                # Get updated residual capacity values 
+                old_res_cap = pd.read_csv(str(Path(option_dir_data, "ResidualCapacity.csv")))
+                op_life = pd.read_csv(str(Path(option_dir_data, "OperationalLife.csv")))
+                new_cap = pd.read_csv(str(Path(option_dir_results, "NewCapacity.csv")))
+                new_res_cap = mu.get_new_capacity_lifetime(op_life, new_cap)
+                res_cap = mu.merge_res_capacites(old_res_cap, new_res_cap)
+                
+                # overwrite residual capacity values for all subsequent steps
+                next_step = step + 1
+                while next_step < num_steps:
                     
-                    cd_snakemake = "snakemake --cores %i" % cores
-                    sp.run([cd_snakemake], shell=True, capture_output=True)
-
-                else:
-                    i = 0
-                    for path_df in paths_df_in_step:
-                        ms.run_df(path_df,paths_res_in_step[i])
-                        i+=1
-                for sce in range(len(paths_res_in_step)):
-                    if not os.listdir(paths_res_in_step[sce]):
-                        p = len(dic_scen_paths[s][sce].split(os.sep))-1
-                        for z in range(s+1,len(dic_scen_paths)):
-                            for x in range(len(dic_scen_paths[z])):
-                                if dic_scen_paths[z][x]!='none':
-                                    if dic_scen_paths[z][x].split(os.sep)[p] == dic_scen_paths[s][sce].split(os.sep)[-1]:
-                                        dic_scen_paths[z][x] = 'none'
-                    else:
-                        stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length])
-
-    else:
-        # Procedure if the first step has a different length than the following steps.
-        step_length_tp = step_length
-        step_length = []
-        for l in step_length_tp:
-            step_length.append(int(l))
-        dic_yr_in_steps, full_steps = ds.split_data(input_data,step_length)
-        all_steps = len(dic_yr_in_steps)
-        all_scenarios = get_scen(path_param) #Create dictionary for stages with decisions creating new scenarios
-        dic_step_paths = step_directories(os.path.join('..','data'),all_steps)
-        dic_scen = scen_dic(all_scenarios,all_steps)
-        dic_scen_paths = scen_directories(dic_step_paths,dic_scen)
-        dic_step_res_paths = step_directories(os.path.join('..','steps'),all_steps)
-        dic_step_scen_paths = scen_directories(dic_step_res_paths,dic_scen)
-        dic_fin_res_path = dict()
-        for s in range(all_steps):
-            logger.info('Step %i started' % s)
-            paths_dp_step = copy_dps(s,dic_scen,dic_scen_paths)
-            paths_in_step = []
-            paths_df_in_step = []
-            paths_res_in_step = []
-            if s==0:
-                dic_fin_res_path[s] = final_paths(dic_scen,[],s)
-                for sce in range(len(dic_scen_paths[s])):
-                    if dic_scen_paths[s][sce] != 'none':
-                        if s in dic_scen:
-                            ns.main(dic_scen_paths[s][sce],s,all_scenarios[s],dic_scen[s][dic_scen_paths[s][sce].split(os.sep)[-1]],dic_yr_in_steps)
-                        path_df = os.sep.join(paths_dp_step[sce].split(os.sep)[:-1])+'.txt'
-                        paths_df_in_step.append(path_df)
-                        ms.dp_to_df(paths_dp_step[sce],path_df)
-                        paths_res_in_step.append(dic_step_scen_paths[s][sce])
-                        paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
-
-                logger.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
-                logger.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
-                if solver!=None:
-                    with open('snakefile_tpl.txt', 'r') as file:
-                        snakefile = file.readlines()
-                    line_paths = "PATHS = ['" + "',\n'".join(paths_in_step) + "']\n"
-
-                    snakefile[1] = line_paths
-
-                    with open('snakefile', 'w') as file:
-                        file.writelines(snakefile)
+                    step_res_cap = res_cap.loc[res_cap["YEAR"].isin(years_per_step[next_step])]
                     
-                    cd_snakemake = "snakemake --cores %i" % cores
-                    sp.run([cd_snakemake], shell=True, capture_output=True)
-
-                else:
-                    i = 0
-                    for path_df in paths_df_in_step:
-                        ms.run_df(path_df,paths_res_in_step[i])
-                        i+=1
-
-                for sce in range(len(dic_scen_paths[s])):
-                    if not os.listdir(paths_res_in_step[sce]): #if scenario run failed, this removes following dependent scnearios
-                        for z in range(s+1,len(dic_scen_paths)):
-                            for x in range(len(dic_scen_paths[z])):
-                                if dic_scen_paths[z][x].split(os.sep)[3] == dic_scen_paths[s][sce].split(os.sep)[-1]:
-                                    dic_scen_paths[z][x] = 'none'
-                    else:
-                        stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[0]])
-
-            else:
-                dic_fin_res_path[s] = final_paths(dic_scen,dic_fin_res_path[s-1],s)
-                copy_fr(s,dic_scen,dic_fin_res_path[s-1])
-                i = 0
-                for sce in range(len(dic_scen_paths[s-1])):
-                    if s in dic_scen:
-                        for scn in range(len(dic_scen[s])):
-                            if dic_scen_paths[s][i] != 'none':
-                                path_dp_d = os.path.join(paths_dp_step[i],'data')
-                                rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
-                                ns.main(dic_scen_paths[s][i],s,all_scenarios[s],dic_scen[s][dic_scen_paths[s][i].split(os.sep)[-1]],dic_yr_in_steps)
-                                path_df = os.sep.join(paths_dp_step[i].split(os.sep)[:-1])+'.txt'
-                                paths_df_in_step.append(path_df)
-                                ms.dp_to_df(paths_dp_step[i],path_df)
-                                paths_res_in_step.append(dic_step_scen_paths[s][i])
-                                paths_in_step.append(os.sep.join(dic_step_scen_paths[s][i].split(os.sep)[2:]))
-
-                            i += 1
-                        shutil.rmtree(os.path.join(dic_fin_res_path[s-1][sce],'res'))
-                    else:
-                        if dic_scen_paths[s][sce] != 'none':
-                            path_dp_d = os.path.join(paths_dp_step[sce],'data')
-                            rtns.main(path_dp_d,dic_fin_res_path[s-1][sce])
-                            path_df = os.sep.join(paths_dp_step[sce].split(os.sep)[:-1])+'.txt'
-                            paths_df_in_step.append(path_df)
-                            ms.dp_to_df(paths_dp_step[sce],path_df)
-                            paths_res_in_step.append(dic_step_scen_paths[s][sce])
-                            paths_in_step.append(os.sep.join(dic_step_scen_paths[s][sce].split(os.sep)[2:]))
-
-                logger.info("Paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_in_step})
-                logger.info("Result paths in step %(step)i: %(paths)s" % {'step': s, 'paths': paths_res_in_step})
-                if solver!=None:
-                    with open('snakefile_tpl.txt', 'r') as file:
-                        snakefile = file.readlines()
-                    line_paths = "PATHS = ['" + "',\n'".join(paths_in_step) + "']\n"
-
-                    snakefile[1] = line_paths
-
-                    with open('snakefile', 'w') as file:
-                        file.writelines(snakefile)
+                    # no more res capacity to pass on
+                    if step_res_cap.empty:
+                        break
                     
-                    cd_snakemake = "snakemake --cores %i" % cores
-                    sp.run([cd_snakemake], shell=True, capture_output=True)
-
-                else:
-                    i = 0
-                    for path_df in paths_df_in_step:
-                        ms.run_df(path_df,paths_res_in_step[i])
-                        i += 1
-                for sce in range(len(paths_res_in_step)):
-                    if not os.listdir(paths_res_in_step[sce]):
-                        p = len(dic_scen_paths[s][sce].split(os.sep))-1
-                        for z in range(s+1,len(dic_scen_paths)):
-                            for x in range(len(dic_scen_paths[z])):
-                                if dic_scen_paths[z][x]!='none':
-                                    if dic_scen_paths[z][x].split(os.sep)[p] == dic_scen_paths[s][sce].split(os.sep)[-1]:
-                                        dic_scen_paths[z][x] = 'none'
-                    else:
-                        stf.main(paths_res_in_step[sce],dic_fin_res_path[s][sce],s,dic_yr_in_steps[s].iloc[:step_length[1]])
-
-
-"""
+                    # apply max option level for the step 
+                    option_dir_to_update = Path(data_dir, f"step_{next_step}")
+                    for each_option in option:
+                        option_dir_to_update = option_dir_to_update.joinpath(each_option)
+                    for subdir in utils.get_subdirectories(str(option_dir_to_update)):
+                        step_res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
+                        
+                    next_step += 1
+        
 
 if __name__ == '__main__':
     main() #input_data,step_length,path_param,solver)

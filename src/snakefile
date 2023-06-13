@@ -1,8 +1,7 @@
 
 configfile: "../data/config.yaml"
 
-options = [x[:-3] for x in config["files"]]
-# print(options)
+options = [x[:-3] for x in config["files"]] # remove .csv
 
 rule all:
     input: 
@@ -26,6 +25,8 @@ rule solve_lp:
           cbc {input.lp_file} solve -sec 1500 -solu {output.sol_file}
         fi
         """
+
+
 
 """
 Commented out cause you will need the transform script and sort results for CPLEX
