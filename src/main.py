@@ -20,11 +20,12 @@ import utils
 import main_utils as mu
 import preprocess_data 
 import solve
-from tqdm import trange, tqdm
+from tqdm import tqdm
 import subprocess
 import yaml
 import logging
 import sys
+import glob
 
 
 path_log = os.path.join("..", "logs", "log.log")
@@ -64,8 +65,23 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     # Remove previous run data
     ##########################################################################
     
-    subprocess.run(["cd ..", "bash clean.sh"], shell = True)
+    data_dir = Path("..", "data")
+    step_dir = Path("..", "steps")
+    results_dir = Path("..", "results")
     
+    for dir in glob.glob(str(data_dir / "data*/")):
+        # remove both "data/" and "data_*/" folders
+        shutil.rmtree(dir)
+        
+    for dir in glob.glob(str(data_dir / "step_*/")):
+        shutil.rmtree(dir)
+        
+    for dir in glob.glob(str(results_dir / "*/")):
+        shutil.rmtree(dir)
+        
+    for dir in glob.glob(str(step_dir / "*/")):
+        shutil.rmtree(dir)
+        
     ##########################################################################
     # Setup data and folder structure 
     ##########################################################################
@@ -79,8 +95,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     step_length = utils.format_step_input(step_length)
 
     # get step length parameters 
-    years_per_step, _ = ds.split_data(input_data, step_length)
-    num_steps = len(years_per_step)
+    actual_years_per_step, modelled_years_per_step, _ = ds.split_data(input_data, step_length)
+    num_steps = len(modelled_years_per_step)
     
     # dictionary for steps with new scenarios
     steps = mu.get_step_data(path_param) # returns Dict[int, Dict[str, pd.DataFrame]]
@@ -91,17 +107,14 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     step_options = mu.append_step_num_to_option(step_options) 
     
     # create option directores in data/
-    data_dir = Path("..", "data")
     mu.create_option_directories(str(data_dir), step_options, step_directories=True)
     
     # create option directories in steps/
-    step_dir = Path("..", "steps")
     if not step_dir.exists():
         step_dir.mkdir()
     mu.create_option_directories(str(step_dir), step_options, step_directories=True)
     
     # create option directories in results/
-    results_dir = Path("..", "results")
     if not results_dir.exists():
         results_dir.mkdir()
     mu.create_option_directories(str(results_dir), step_options, step_directories=False)
@@ -140,7 +153,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 for param, param_data in option_data_by_param[option_to_apply].items():
                     path_to_data = Path(option_dir, f"{param}.csv")
                     original = pd.read_csv(path_to_data)
-                    param_data_year_filtered = param_data.loc[param_data["YEAR"].isin(years_per_step[step_num])].reset_index(drop=True)
+                    param_data_year_filtered = param_data.loc[param_data["YEAR"].isin(modelled_years_per_step[step_num])].reset_index(drop=True)
                     new = mu.apply_option_data(original, param_data_year_filtered)
                     new.to_csv(path_to_data, index=False)
  
@@ -160,8 +173,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         if not options:
             csvs = Path("..", "data", f"step_{step}")
             datafile = Path("..", "steps", f"step_{step}", "data.txt")
+            datafile_pp = Path("..", "steps", f"step_{step}", "data_pp.txt")
             mu.create_datafile(csvs, datafile, otoole_config)
-            preprocess_data.main("otoole", datafile, datafile)
+            preprocess_data.main("otoole", str(datafile), str(datafile_pp))
         else:
             for option in options:
                 csvs = Path("..", "data", f"step_{step}")
@@ -169,9 +183,10 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 for each_option in option:
                     csvs = csvs.joinpath(each_option)
                     datafile = datafile.joinpath(each_option)
-                datafile = datafile.joinpath("data.txt")
+                datafile_pp = datafile.joinpath("data_pp.txt") # preprocessed 
+                datafile = datafile.joinpath("data.txt") # need non-preprocessed for otoole results
                 mu.create_datafile(csvs, datafile, otoole_config)
-                preprocess_data.main("otoole", datafile, datafile)
+                preprocess_data.main("otoole", str(datafile), str(datafile_pp))
 
         ######################################################################
         # Create LP file 
@@ -182,7 +197,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
 
         if not options:
             lp_file = Path("..", "steps", f"step_{step}", "model.lp")
-            datafile = Path("..", "steps", f"step_{step}", "data.txt")
+            datafile = Path("..", "steps", f"step_{step}", "data_pp.txt")
             exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
             if exit_code == 1:
                 failed_lps.append(lp_file)
@@ -194,7 +209,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     lp_file = lp_file.joinpath(each_option)
                     datafile = datafile.joinpath(each_option)
                 lp_file = lp_file.joinpath("model.lp")
-                datafile = datafile.joinpath("data.txt")
+                datafile = datafile.joinpath("data_pp.txt")
                 exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
                 if exit_code == 1:
                     failed_lps.append(lp_file)
@@ -217,9 +232,13 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 directory_path = directory_path.parent
             result_option_path = Path(results_dir).joinpath(*result_options)
             if result_option_path == Path("..", "results"):
-                logger.error("Top level run failed :(")
+                print("Top level run failed :(")
                 for item in result_option_path.glob('*'):
-                    shutil.rmtree(item)
+                    try:
+                        shutil.rmtree(item)
+                    except NotADirectoryError: # picks up the .gitignore file
+                        sys.exit()
+                    sys.exit()
             elif os.path.exists(str(result_option_path)):
                 shutil.rmtree(str(result_option_path))
 
@@ -292,7 +311,6 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     failed_sols.append(str(sol_file))
         
         # remove folder if no .sol file exists
-        
         for failed_sol in failed_sols:
             directory_path = Path(failed_sol).parent
             if os.path.exists(str(directory_path)):
@@ -306,7 +324,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             result_option_path = Path(results_dir).joinpath(*result_options)
             if result_option_path == Path("..", "results"):
                 logger.error("All runs failed")
-                sys.exit("Quitting... ")
+                sys.exit("All runs failed :(")
             elif os.path.exists(str(result_option_path)):
                 shutil.rmtree(str(result_option_path))
 
@@ -315,18 +333,30 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         ######################################################################
  
         if not options:
-            sol_dir = Path("..", "steps", f"step_{step}")
+            sol_dir = Path(step_dir, f"step_{step}")
             if sol_dir.exists():
                 sol_file = Path(sol_dir, "model.sol")
-                solve.generate_results(str(sol_file), solver, otoole_config)
+                data_file = Path(sol_dir, "data.txt")
+                solve.generate_results(
+                    sol_file=str(sol_file), 
+                    solver=solver, 
+                    config=otoole_config, 
+                    # data_file=str(data_file)
+                )
         else:
             for option in options:
-                sol_dir = Path("..", "steps", f"step_{step}")
+                sol_dir = Path(step_dir, f"step_{step}")
                 for each_option in option:
                     sol_dir = sol_dir.joinpath(each_option)
                 if sol_dir.exists():
                     sol_file = Path(sol_dir, "model.sol")
-                    solve.generate_results(str(sol_file), solver, otoole_config)
+                    data_file = Path(sol_dir, "data.txt")
+                    solve.generate_results(
+                        sol_file=str(sol_file), 
+                        solver=solver, 
+                        config=otoole_config, 
+                        # data_file=str(data_file)
+                    )
  
         ######################################################################
         # Save Results 
@@ -337,11 +367,19 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             sol_results_dir = Path("..", "steps", f"step_{step}", "results")
             if not sol_results_dir.exists():
                 logger.error("All runs failed")
-                sys.exit("Quitting...")
+                sys.exit("All runs failed :(")
             for subdir in utils.get_subdirectories(str(results_dir)):
                 for result_file in sol_results_dir.glob("*"):
-                    utils.merge_csvs(src=str(result_file), dst=str(Path(subdir, result_file.name)), years=years_per_step[step])
-            
+                    src = result_file
+                    dst = Path(subdir, result_file.name)
+                    if not dst.exists():
+                        shutil.copy(str(src), str(dst))
+                    else:
+                        src_df = pd.read_csv(str(src))
+                        dst_df = pd.read_csv(str(dst))
+                        result_df = utils.merge_dataframes(src=src_df, dst=dst_df, years=actual_years_per_step[step])
+                        result_df.to_csv(str(dst), index=False)
+
         else:
             for option in options:
                 
@@ -363,15 +401,19 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 sol_results_dir = Path(sol_results_dir, "results")
                 for result_file in sol_results_dir.glob("*"):
                     for dst_results_dir in dst_result_subdirs:
-                        utils.merge_csvs(src=str(result_file), dst=str(Path(dst_results_dir, result_file.name)))
+                        src = result_file
+                        dst = Path(dst_results_dir, result_file.name)
+                        if not dst.exists():
+                            shutil.copy(str(src), str(dst))
+                        else:
+                            src_df = pd.read_csv(str(src))
+                            dst_df = pd.read_csv(str(dst))
+                            result_df = utils.merge_dataframes(src=src_df, dst=dst_df, years=actual_years_per_step[step])
+                            result_df.to_csv(str(dst), index=False)
     
         ######################################################################
         # Update data for next step
         ######################################################################
-        
-        # step_num = step
-        # while step_num < num_steps:
-        #     print(step_num)
         
         # skip on last step
         if step + 1 > num_steps:
@@ -392,8 +434,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             # overwrite residual capacity values for all subsequent steps
             next_step = step + 1
             while next_step < num_steps:
-                
-                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(years_per_step[next_step])]
+
+                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(actual_years_per_step[next_step])]
                 
                 # no more res capacity to pass on
                 if step_res_cap.empty:
@@ -430,8 +472,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 next_step = step + 1
                 while next_step < num_steps:
                     
-                    step_res_cap = res_cap.loc[res_cap["YEAR"].isin(years_per_step[next_step])]
-                    
+                    step_res_cap = res_cap.loc[res_cap["YEAR"].isin(actual_years_per_step[next_step])]
+
                     # no more res capacity to pass on
                     if step_res_cap.empty:
                         break

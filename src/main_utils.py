@@ -421,8 +421,8 @@ def create_datafile(csv_dir: str, datafile: str, config: Dict[str,Any]) -> None:
     """
     reader = ReadCsv(user_config=config)
     writer = WriteDatafile(user_config=config)
-    converter = Context(read_strategy=reader, write_strategy=writer)
-    converter.convert(csv_dir, datafile)
+    context = Context(read_strategy=reader, write_strategy=writer)
+    context.convert(csv_dir, datafile)
     
 def get_option_data_per_step(steps: Dict[int, Dict[str, pd.DataFrame]]) -> Dict[int, Dict[str, pd.DataFrame]]:
     """Gets option data at a step level.

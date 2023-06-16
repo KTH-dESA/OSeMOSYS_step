@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, Any, List
 from yaml import load 
 import pandas as pd
+import sys
 from otoole.utils import UniqueKeyLoader
 
 import logging
@@ -80,23 +81,31 @@ def check_for_subdirectory(directory: str):
             return True
     return False
 
-def merge_csvs(src: str, dst: str, years: list[int] = None):
-    """Combines two CSVs together
+def merge_dataframes(src: pd.DataFrame, dst: pd.DataFrame, years: list[int] = None) -> pd.DataFrame:
+    """Combines two dfs together
     
     Args:
         src: str, 
-            Source file 
+            first df
         dst: str, 
-            Destination file
+            Second df
         years: list[int] = None 
             Years to filter source over. If none, no filtering happens
+            
+    Returns:
+        pd.DataFrame
+            Merged df
     """
-    if not Path(dst).exists():
-        shutil.copy(str(src), str(dst))
-    else:
-        df_src = pd.read_csv(str(src))
-        if years:
-            df_src = df_src.loc[df_src["YEAR"].isin(years)].reset_index(drop=True)
-        df_dst = pd.read_csv(str(dst))
-        df = pd.concat([df_src, df_dst])
-        df.to_csv(str(dst), index=False)
+    if not (src.columns.to_list()) == (dst.columns.to_list()):
+        logger.error(f"columns for source are {src.columns} and columns to destination are {dst.columns}")
+        print("Exiting...")
+        sys.exit()
+    if years:
+        if "YEAR" in src.columns:
+            src = src.loc[src["YEAR"].isin(years)].reset_index(drop=True)
+    df = pd.concat([dst, src])
+    if all(param in df.columns.to_list() for param in ["REGION", "TECHNOLOGY", "YEAR"]):
+        df = df.sort_values(by = ["REGION", "TECHNOLOGY", "YEAR"])
+    elif all(param in df.columns.to_list() for param in ["REGION", "YEAR"]):
+        df = df.sort_values(by = ["REGION", "YEAR"])
+    return df

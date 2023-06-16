@@ -90,8 +90,10 @@ def split_data(datafile: str, step_size: List[int]) -> Tuple[Dict, int]:
             step, with the remaining step sizes being the second value
     
     Returns:
-        dic_yr_step: Dict
-            {step: years in step}
+        actual_years_per_step: Dict {step: actual years in step}
+            Actual years per step (ie. 1995-2000 for a 5yr step)
+        model_years_per_step: Dict {step: modelled years in step}
+            Modelled years per step (ie. 1995-2005 for a 5yr step)
         full_steps: int
             Number of full steps in model run 
     """
@@ -120,7 +122,8 @@ def split_data(datafile: str, step_size: List[int]) -> Tuple[Dict, int]:
     otoole_reader = read_csv(str(csv_dir), config)
     data = otoole_reader[0]
     default_values = otoole_reader[1]
-    dic_yr_step = dict()
+    model_years_per_step = {} # actual years plus extra at end
+    actual_years_per_step = {} # actual years per step 
     
     # parse out data based on number of years 
     i = 0
@@ -128,33 +131,43 @@ def split_data(datafile: str, step_size: List[int]) -> Tuple[Dict, int]:
         for i in range(all_steps):
             start = step_size[0] * i
             if i + 1 < full_steps:
-                end = start + (step_size[0] * 2)
-                step_years = m_period.iloc[start:end]["VALUE"].to_list()
+                end_model = start + (step_size[0] * 2)
+                end_actual = start + step_size[0]
+                model_step_years = m_period.iloc[start:end_model]["VALUE"].to_list()
+                actual_step_years = m_period.iloc[start:end_actual]["VALUE"].to_list()
             else:
-                step_years = m_period.iloc[start:]["VALUE"].to_list()
-            dic_yr_step[i] = step_years
-            step_data = get_step_data(data, step_years)
+                model_step_years = m_period.iloc[start:]["VALUE"].to_list()
+                actual_step_years = m_period.iloc[start:]["VALUE"].to_list()
+            model_years_per_step[i] = model_step_years
+            actual_years_per_step[i] = actual_step_years
+            step_data = get_step_data(data, model_step_years)
             write_csv(step_data, default_values, str(Path(data_dir, f"data_{i}")), config)
             logger.info(f"Wrote data for step {i}")
     else:
         for i in range(all_steps):
             if i == 0:
                 start = 0
-                end = step_size[0] * 2
-                step_years = m_period.iloc[start:end]["VALUE"].to_list()
+                end_model = step_size[0] * 2
+                end_actual = step_size[0]
+                step_years_model = m_period.iloc[start:end_model]["VALUE"].to_list()
+                step_years_actual = m_period.iloc[start:end_actual]["VALUE"].to_list()
             elif i + 1 < full_steps:
                 start = step_size[0] + step_size[1] * (i - 1)
-                end = start + (step_size[1] * 2)
-                step_years = m_period.iloc[start:end]["VALUE"].to_list()
+                end_model = start + (step_size[1] * 2)
+                end_actual = start + step_size[1]
+                step_years_model = m_period.iloc[start:end_model]["VALUE"].to_list()
+                step_years_actual = m_period.iloc[start:end_actual]["VALUE"].to_list()
             else:
                 start = step_size[0] + (i - 1) * step_size[1]
-                step_years = m_period.iloc[start:]["VALUE"].to_list()
-            dic_yr_step[i] = step_years
-            step_data = get_step_data(data, step_years)
+                step_years_model = m_period.iloc[start:]["VALUE"].to_list()
+                step_years_actual = m_period.iloc[start:]["VALUE"].to_list()
+            model_years_per_step[i] = step_years_model
+            actual_years_per_step[i] = step_years_actual
+            step_data = get_step_data(data, step_years_model)
             write_csv(step_data, default_values, str(Path(data_dir, f"data_{i}")), config)
             logger.info(f"Wrote data for step {i}")
                 
-    return dic_yr_step, full_steps
+    return actual_years_per_step, model_years_per_step, full_steps
 
 if __name__ == '__main__':
     path = sys.argv[1]
