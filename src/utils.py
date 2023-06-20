@@ -3,12 +3,13 @@
 import os
 import shutil
 from pathlib import Path 
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List, Union, Tuple
 from yaml import load 
 import pandas as pd
 import sys
 import glob
 from otoole.utils import UniqueKeyLoader
+from otoole import ReadDatafile, WriteCsv, Context, ReadCsv
 
 import logging
 logger = logging.getLogger(__name__)
@@ -95,7 +96,7 @@ def concat_dataframes(src: pd.DataFrame, dst: pd.DataFrame, years: list[int] = N
             
     Returns:
         pd.DataFrame
-            Merged df
+            dataframes concatanted 
     """
     if not (src.columns.to_list()) == (dst.columns.to_list()):
         logger.error(f"columns for source are {src.columns} and columns to destination are {dst.columns}")
@@ -134,3 +135,34 @@ def get_options_from_path(file_path: str, extension: str = None) -> Union[List[s
             return dirs[num + 1:]
     return None
     
+def datafile_to_csv(datafile: str, csv_dir: str, config: Dict[str,Any]) -> None:
+    """Converts datafile to folder of csvs
+    
+    Args:
+        datafile: str
+            Path to datafile 
+        csv_dir: str
+            Path to directory of csv folder 
+        config: Dict[str,Any]
+            otoole configuration data
+    """
+    reader = ReadDatafile(user_config=config)
+    writer = WriteCsv(user_config=config)
+    converter = Context(read_strategy=reader, write_strategy=writer)
+    converter.convert(datafile, csv_dir)
+    
+def read_csv(csv_dir: str, config: Dict[str,Any]) -> Tuple[Dict[str, pd.DataFrame], Dict[str, Any]]:
+    """Reads in csv data using otoole
+    
+    Returns: 
+        Tuple[Dict[str, pd.DataFrame], Dict[str, Any]]
+            First dictionary is the data 
+            Second dictionary is the default values
+    """
+    reader = ReadCsv(user_config=config)
+    return reader.read(filepath=csv_dir)
+
+def write_csv(data: Dict[str, pd.DataFrame], default_values: Dict[str, Any], csv_dir:str, config: Dict[str,Any]) -> None:
+    """Writes out CSV data"""
+    writer = WriteCsv(user_config=config)
+    writer.write(inputs=data, filepath=csv_dir, default_values=default_values)

@@ -59,7 +59,7 @@ set MODExTECHNOLOGYperEMISSION{e in EMISSION} within MODE_OF_OPERATION cross TEC
 #####################
 #
 ########                        Global                                                 #############
-param ResultsPath, symbolic default '../steps/step4/A1B1/C0';
+param ResultsPath, symbolic default 'results';
 param YearSplit{l in TIMESLICE, y in YEAR};
 param DiscountRate{r in REGION};
 param DiscountRateIdv{r in REGION, t in TECHNOLOGY}, default DiscountRate[r];

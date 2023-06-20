@@ -47,7 +47,7 @@ def get_step_data(scenaro_path: str) -> Dict[int, Dict[str, pd.DataFrame]]:
         for _, _, files in os.walk(str(step_path)):
             scenarios = [f for f in files if not f[0] == '.'] 
         for scenario in scenarios:
-            # the -4 removes the .csv
+            # the -4 removes the ".csv"
             scenario_data[scenario[:-4]] = pd.read_csv(Path(step_path, scenario))
         scenarios_per_step[int(step_num)] = scenario_data
         

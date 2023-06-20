@@ -73,6 +73,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     for dir in glob.glob(str(data_dir / "data*/")):
         # remove both "data/" and "data_*/" folders
         shutil.rmtree(dir)
+    utils.check_for_directory(Path(data_dir, "data"))
         
     for dir in glob.glob(str(data_dir / "step_*/")):
         shutil.rmtree(dir)
@@ -88,24 +89,38 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     ##########################################################################
     
     # Create scenarios folder
-    if path_param == None:
-        dir_name = os.getcwd()
-        path_param = os.path.join(os.sep.join(dir_name.split(os.sep)[:-1]),'data','scenarios')
+    if path_param:
+        scenario_dir = Path(path_param)
+    else:
+        scenario_dir = Path(data_dir, "scenarios")
         
     # format step length 
     step_length = utils.format_step_input(step_length)
 
+    # Create folder of csvs from datafile
+    otoole_csv_dir = Path(data_dir, "data")
+    otoole_config_path = Path(data_dir, "otoole_config.yaml")
+    otoole_config = utils.read_otoole_config(str(otoole_config_path))
+    utils.datafile_to_csv(str(input_data), str(otoole_csv_dir), otoole_config)
+
     # get step length parameters 
-    actual_years_per_step, modelled_years_per_step, num_steps = ds.split_data(input_data, step_length)
+    otoole_data, otoole_defaults = utils.read_csv(str(otoole_csv_dir), otoole_config)
+    actual_years_per_step, modelled_years_per_step, num_steps = ds.split_data(otoole_data, step_length)
+
+    # write out original parsed step data 
+    for step, years_per_step in modelled_years_per_step.items():
+        step_data = ds.get_step_data(otoole_data, years_per_step)
+        utils.write_csv(step_data, otoole_defaults, str(Path(data_dir, f"data_{step}")), otoole_config)
+        logger.info(f"Wrote data for step {step}")
 
     # dictionary for steps with new scenarios
-    steps = mu.get_step_data(path_param) # returns Dict[int, Dict[str, pd.DataFrame]]
+    steps = mu.get_step_data(str(scenario_dir)) # returns Dict[int, Dict[str, pd.DataFrame]]
     
     # get option combinations per step
     step_options = mu.get_options_per_step(steps) # returns Dict[int, List[str]]
     step_options = mu.add_missing_steps(step_options, num_steps)
     step_options = mu.append_step_num_to_option(step_options) 
-    
+
     # create option directores in data/
     mu.create_option_directories(str(data_dir), step_options, step_directories=True)
 
@@ -162,10 +177,10 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     ##########################################################################
  
     csv_dirs = mu.get_option_combinations_per_step(step_options)
-    otoole_config = utils.read_otoole_config(Path(data_dir, "otoole_config.yaml"))
-    do_not_build = [] # tracking for failed builds and solves
     
     for step, options in tqdm(csv_dirs.items(), total=len(csv_dirs), desc="Building and Solving Models", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
+
+        failed = False # for tracking failed builds / solves
         
         ######################################################################
         # Create Datafile
@@ -173,21 +188,27 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
 
         if not options:
             csvs = Path(data_dir, f"step_{step}")
-            datafile = Path(step_dir, f"step_{step}", "data.txt")
-            datafile_pp = Path(step_dir, f"step_{step}", "data_pp.txt")
-            mu.create_datafile(csvs, datafile, otoole_config)
-            preprocess_data.main("otoole", str(datafile), str(datafile_pp))
+            data_file = Path(step_dir, f"step_{step}", "data.txt")
+            data_file_pp = Path(step_dir, f"step_{step}", "data_pp.txt")
+            mu.create_datafile(csvs, data_file, otoole_config)
+            preprocess_data.main("otoole", str(data_file), str(data_file_pp))
         else:
             for option in options:
                 csvs = Path(data_dir, f"step_{step}")
-                datafile = Path(step_dir, f"step_{step}")
+                data_file = Path(step_dir, f"step_{step}")
                 for each_option in option:
                     csvs = csvs.joinpath(each_option)
-                    datafile = datafile.joinpath(each_option)
-                datafile_pp = datafile.joinpath("data_pp.txt") # preprocessed 
-                datafile = datafile.joinpath("data.txt") # need non-preprocessed for otoole results
-                mu.create_datafile(csvs, datafile, otoole_config)
-                preprocess_data.main("otoole", str(datafile), str(datafile_pp))
+                    data_file = data_file.joinpath(each_option)
+                if not data_file.exists(): 
+                    failed = True
+                else:
+                    data_file_pp = data_file.joinpath("data_pp.txt") # preprocessed 
+                    data_file = data_file.joinpath("data.txt") # need non-preprocessed for otoole results
+                    mu.create_datafile(csvs, data_file, otoole_config)
+                    preprocess_data.main("otoole", str(data_file), str(data_file_pp))
+        
+        if failed:
+            continue
 
         ######################################################################
         # Create LP file 
@@ -225,7 +246,6 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             directory_path = Path(failed_lp).parent
             if directory_path.exists():
                 shutil.rmtree(str(directory_path))
-                # do_not_build.append(directory_path)
             
             # remove the corresponding folder in results/
             result_options = []
@@ -239,7 +259,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     if not item == ".gitignore":
                         shutil.rmtree(item)
                 sys.exit()
-            elif os.path.exists(str(result_option_path)):
+            elif result_option_path.exists():
                 shutil.rmtree(str(result_option_path))
 
         ######################################################################
@@ -290,12 +310,10 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         subprocess.run(cmd, shell = True, capture_output = True)
         
         ######################################################################
-        # Remove failed solves 
+        # Check for solutions
         ######################################################################
 
         failed_sols = []
-
-        # check for solution 
         
         if not options:
             sol_file = Path(step_dir, f"step_{step}", "model.sol")
@@ -316,27 +334,32 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 if solver == "cbc":
                     if solve.check_cbc_feasibility(str(sol_file)) == 1:
                         failed_sols.append(str(sol_file))
-        
-        # remove folder if no .sol file exists
+
+        ######################################################################
+        # Remove failed solves 
+        ######################################################################
+
         if failed_sols:
             print(f"Models {failed_sols} failed solving")
-        for failed_sol in failed_sols:
-            # print(utils.get_options_from_path(str(failed_sol), ".sol"))
-            directory_path = Path(failed_sol).parent
-            if os.path.exists(str(directory_path)):
-                shutil.rmtree(str(directory_path))
-
-            # remove the corresponding folder in results/
-            result_options = []
-            while directory_path.name != f"step_{step}":
-                result_options.insert(0, directory_path.name)
-                directory_path = directory_path.parent
-            result_option_path = Path(results_dir).joinpath(*result_options)
-            if result_option_path == results_dir:
-                logger.error("All runs failed")
-                sys.exit("All runs failed :(")
-            elif os.path.exists(str(result_option_path)):
-                shutil.rmtree(str(result_option_path))
+            for failed_sol in failed_sols:
+                # get failed options
+                failed_options = utils.get_options_from_path(failed_sol, ".sol") # returns ["1E0-1C0", "2C1"]
+                
+                # remove options from results 
+                result_option_path = Path(results_dir).joinpath(*failed_options)
+                if result_option_path == results_dir:
+                    logger.error("All runs failed")
+                    sys.exit("All runs failed :(")
+                elif result_option_path.exists():
+                    shutil.rmtree(str(result_option_path))
+                    
+                # remove options from current and future steps 
+                step_to_delete = step
+                while step_to_delete <= num_steps:
+                    step_option_path = Path(step_dir, f"step_{step_to_delete}").joinpath(*failed_options)
+                    if step_option_path.exists():
+                        shutil.rmtree(str(step_option_path))
+                    step_to_delete += 1
 
         ######################################################################
         # Generate result CSVs
@@ -351,7 +374,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     sol_file=str(sol_file), 
                     solver=solver, 
                     config=otoole_config, 
-                    # data_file=str(data_file)
+                    data_file=str(data_file)
                 )
         else:
             for option in options:
@@ -365,7 +388,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                         sol_file=str(sol_file), 
                         solver=solver, 
                         config=otoole_config, 
-                        # data_file=str(data_file)
+                        data_file=str(data_file)
                     )
  
         ######################################################################
