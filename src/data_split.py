@@ -95,7 +95,7 @@ def split_data(datafile: str, step_size: List[int]) -> Tuple[Dict, int]:
         model_years_per_step: Dict {step: modelled years in step}
             Modelled years per step (ie. 1995-2005 for a 5yr step)
         full_steps: int
-            Number of full steps in model run 
+            Number of full steps in model run indexed from zero
     """
     
     # check for directory structure 

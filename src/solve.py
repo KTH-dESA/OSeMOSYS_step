@@ -73,3 +73,27 @@ def create_lp(datafile: str, lp_file: str, osemosys: str) -> int:
         return 1
     else:
         return 0
+    
+
+def check_cbc_feasibility(sol: str) -> int:
+    """Checks if the CBC solution is infeasible
+    
+    Args:
+        sol: str
+            Path to CBC solution file 
+    
+    Returns:
+        0: int
+            If successful 
+        1: int
+            If not successful
+    """
+    with open(sol) as f:
+        first_line = f.readline()
+    status = first_line.split(" ")[0]
+    if status == "Optimal":
+        return 0
+    else:
+        return 1
+    
+    

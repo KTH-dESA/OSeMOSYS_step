@@ -68,6 +68,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     data_dir = Path("..", "data")
     step_dir = Path("..", "steps")
     results_dir = Path("..", "results")
+    model_dir = Path("..", "model")
     
     for dir in glob.glob(str(data_dir / "data*/")):
         # remove both "data/" and "data_*/" folders
@@ -95,8 +96,10 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     step_length = utils.format_step_input(step_length)
 
     # get step length parameters 
-    actual_years_per_step, modelled_years_per_step, _ = ds.split_data(input_data, step_length)
-    num_steps = len(modelled_years_per_step)
+    actual_years_per_step, modelled_years_per_step, num_steps = ds.split_data(input_data, step_length)
+    # print(actual_years_per_step)
+    # print(modelled_years_per_step)
+    # print(num_steps)
     
     # dictionary for steps with new scenarios
     steps = mu.get_step_data(path_param) # returns Dict[int, Dict[str, pd.DataFrame]]
@@ -107,8 +110,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     step_options = mu.append_step_num_to_option(step_options) 
     
     # create option directores in data/
+    print(step_options)
     mu.create_option_directories(str(data_dir), step_options, step_directories=True)
-    
+
     # create option directories in steps/
     if not step_dir.exists():
         step_dir.mkdir()
@@ -129,7 +133,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     step_option_data = mu.get_option_data_per_step(steps) # {int, Dict[str, pd.DataFrame]}
     option_data_by_param = mu.get_param_data_per_option(step_option_data) # Dict[str, Dict[str, pd.DataFrame]]
 
-    for step_num in range(0, num_steps):
+    for step_num in range(0, num_steps + 1):
         step_dir_number = Path(data_dir, f"step_{step_num}")
         
         # get grouped list of options to apply - ie. [A0-B1, C0]
@@ -162,7 +166,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     ##########################################################################
  
     csv_dirs = mu.get_option_combinations_per_step(step_options)
-    otoole_config = utils.read_otoole_config(Path("..", "data", "otoole_config.yaml"))
+    otoole_config = utils.read_otoole_config(Path(data_dir, "otoole_config.yaml"))
+    do_not_build = [] # tracking for failed builds and solves
     
     for step, options in tqdm(csv_dirs.items(), total=len(csv_dirs), desc="Building and Solving Models", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
         
@@ -171,15 +176,15 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         ######################################################################
 
         if not options:
-            csvs = Path("..", "data", f"step_{step}")
-            datafile = Path("..", "steps", f"step_{step}", "data.txt")
-            datafile_pp = Path("..", "steps", f"step_{step}", "data_pp.txt")
+            csvs = Path(data_dir, f"step_{step}")
+            datafile = Path(step_dir, f"step_{step}", "data.txt")
+            datafile_pp = Path(step_dir, f"step_{step}", "data_pp.txt")
             mu.create_datafile(csvs, datafile, otoole_config)
             preprocess_data.main("otoole", str(datafile), str(datafile_pp))
         else:
             for option in options:
-                csvs = Path("..", "data", f"step_{step}")
-                datafile = Path("..", "steps", f"step_{step}")
+                csvs = Path(data_dir, f"step_{step}")
+                datafile = Path(step_dir, f"step_{step}")
                 for each_option in option:
                     csvs = csvs.joinpath(each_option)
                     datafile = datafile.joinpath(each_option)
@@ -192,19 +197,19 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         # Create LP file 
         ######################################################################
 
-        osemosys_file = Path("..", "model", "osemosys.txt")
+        osemosys_file = Path(model_dir, "osemosys.txt")
         failed_lps = []
 
         if not options:
-            lp_file = Path("..", "steps", f"step_{step}", "model.lp")
-            datafile = Path("..", "steps", f"step_{step}", "data_pp.txt")
+            lp_file = Path(step_dir, f"step_{step}", "model.lp")
+            datafile = Path(step_dir, f"step_{step}", "data_pp.txt")
             exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
             if exit_code == 1:
                 failed_lps.append(lp_file)
         else:
             for option in options:
-                lp_file = Path("..", "steps", f"step_{step}")
-                datafile = Path("..", "steps", f"step_{step}") 
+                lp_file = Path(step_dir, f"step_{step}")
+                datafile = Path(step_dir, f"step_{step}") 
                 for each_option in option:
                     lp_file = lp_file.joinpath(each_option)
                     datafile = datafile.joinpath(each_option)
@@ -224,6 +229,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             directory_path = Path(failed_lp).parent
             if directory_path.exists():
                 shutil.rmtree(str(directory_path))
+                # do_not_build.append(directory_path)
             
             # remove the corresponding folder in results/
             result_options = []
@@ -231,14 +237,12 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 result_options.insert(0, directory_path.name)
                 directory_path = directory_path.parent
             result_option_path = Path(results_dir).joinpath(*result_options)
-            if result_option_path == Path("..", "results"):
+            if result_option_path == results_dir:
                 print("Top level run failed :(")
                 for item in result_option_path.glob('*'):
-                    try:
+                    if not item == ".gitignore":
                         shutil.rmtree(item)
-                    except NotADirectoryError: # picks up the .gitignore file
-                        sys.exit()
-                    sys.exit()
+                sys.exit()
             elif os.path.exists(str(result_option_path)):
                 shutil.rmtree(str(result_option_path))
 
@@ -251,13 +255,13 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         lps_to_solve = []
         
         if not options:
-            lp_file = Path("..", "steps", f"step_{step}", "model.lp")
-            sol_dir = Path("..", "steps", f"step_{step}")
+            lp_file = Path(step_dir, f"step_{step}", "model.lp")
+            sol_dir = Path(step_dir, f"step_{step}")
             lps_to_solve.append(str(lp_file))
         else:
             for option in options:
-                lp_file = Path("..", "steps", f"step_{step}")
-                sol_dir = Path("..", "steps", f"step_{step}")
+                lp_file = Path(step_dir, f"step_{step}")
+                sol_dir = Path(step_dir, f"step_{step}")
                 for each_option in option:
                     lp_file = lp_file.joinpath(each_option)
                 lp_file = lp_file.joinpath("model.lp")
@@ -298,20 +302,30 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         # check for solution 
         
         if not options:
-            sol_file = Path("..", "steps", f"step_{step}", "model.sol")
+            sol_file = Path(step_dir, f"step_{step}", "model.sol")
             if not sol_file.exists():
                 failed_sols.append(str(sol_file))
+            if solver == "cbc":
+                if solve.check_cbc_feasibility(str(sol_file)) == 1:
+                    failed_sols.append(str(sol_file))
+                    
         else:
             for option in options:
-                sol_file = Path("..", "steps", f"step_{step}")
+                sol_file = Path(step_dir, f"step_{step}")
                 for each_option in option:
                     sol_file = sol_file.joinpath(each_option)
                 sol_file = sol_file.joinpath("model.sol")
                 if not sol_file.exists():
                     failed_sols.append(str(sol_file))
+                if solver == "cbc":
+                    if solve.check_cbc_feasibility(str(sol_file)) == 1:
+                        failed_sols.append(str(sol_file))
         
         # remove folder if no .sol file exists
+        if failed_sols:
+            print(f"Models {failed_sols} failed solving")
         for failed_sol in failed_sols:
+            # print(utils.get_options_from_path(str(failed_sol), ".sol"))
             directory_path = Path(failed_sol).parent
             if os.path.exists(str(directory_path)):
                 shutil.rmtree(str(directory_path))
@@ -322,7 +336,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 result_options.insert(0, directory_path.name)
                 directory_path = directory_path.parent
             result_option_path = Path(results_dir).joinpath(*result_options)
-            if result_option_path == Path("..", "results"):
+            if result_option_path == results_dir:
                 logger.error("All runs failed")
                 sys.exit("All runs failed :(")
             elif os.path.exists(str(result_option_path)):
@@ -364,7 +378,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         
         if not options:
             # apply data to all options
-            sol_results_dir = Path("..", "steps", f"step_{step}", "results")
+            sol_results_dir = Path(step_dir, f"step_{step}", "results")
             if not sol_results_dir.exists():
                 logger.error("All runs failed")
                 sys.exit("All runs failed :(")
@@ -372,25 +386,31 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 for result_file in sol_results_dir.glob("*"):
                     src = result_file
                     dst = Path(subdir, result_file.name)
+                    src_df = pd.read_csv(str(src))
                     if not dst.exists():
-                        shutil.copy(str(src), str(dst))
+                        if "YEAR" in src_df.columns:
+                            result_df = src_df.loc[src_df["YEAR"].isin(actual_years_per_step[step])].reset_index(drop=True)
+                        else:
+                            result_df = src_df
                     else:
-                        src_df = pd.read_csv(str(src))
                         dst_df = pd.read_csv(str(dst))
-                        result_df = utils.merge_dataframes(src=src_df, dst=dst_df, years=actual_years_per_step[step])
-                        result_df.to_csv(str(dst), index=False)
+                        result_df = utils.concat_dataframes(src=src_df, dst=dst_df, years=actual_years_per_step[step])
+                    result_df.to_csv(str(dst), index=False)
 
         else:
             for option in options:
                 
                 # get top level result paths 
-                sol_results_dir = Path("..", "steps", f"step_{step}")
+                sol_results_dir = Path(step_dir, f"step_{step}")
                 dst_results_dir = results_dir
                 
                 # apply max option level for the step 
                 for each_option in option:
                     sol_results_dir = sol_results_dir.joinpath(each_option)
                     dst_results_dir = dst_results_dir.joinpath(each_option)
+                    
+                if not dst_results_dir.exists(): # failed solve 
+                    continue
                     
                 # find if there are more nested options for each step
                 dst_result_subdirs = utils.get_subdirectories(str(dst_results_dir))
@@ -408,9 +428,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                         else:
                             src_df = pd.read_csv(str(src))
                             dst_df = pd.read_csv(str(dst))
-                            result_df = utils.merge_dataframes(src=src_df, dst=dst_df, years=actual_years_per_step[step])
+                            result_df = utils.concat_dataframes(src=src_df, dst=dst_df, years=actual_years_per_step[step])
                             result_df.to_csv(str(dst), index=False)
-    
+
         ######################################################################
         # Update data for next step
         ######################################################################
@@ -444,7 +464,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 step_dir_to_update = Path(data_dir, f"step_{next_step}")
                 
                 for subdir in utils.get_subdirectories(str(step_dir_to_update)):
-                    step_res_cap.to_csv(str(Path(step_dir_to_update, "ResidualCapacity.csv")))
+                    step_res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
                     
                 next_step += 1
 
@@ -460,6 +480,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     option_dir_data = option_dir_data.joinpath(each_option)
                     option_dir_results = option_dir_results.joinpath(each_option)
                 option_dir_results = option_dir_results.joinpath("results")
+                
+                if not option_dir_results.exists(): # failed solve 
+                    continue
                 
                 # Get updated residual capacity values 
                 old_res_cap = pd.read_csv(str(Path(option_dir_data, "ResidualCapacity.csv")))
@@ -482,8 +505,12 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     option_dir_to_update = Path(data_dir, f"step_{next_step}")
                     for each_option in option:
                         option_dir_to_update = option_dir_to_update.joinpath(each_option)
-                    for subdir in utils.get_subdirectories(str(option_dir_to_update)):
-                        step_res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
+                    subdirs = utils.get_subdirectories(str(option_dir_to_update))
+                    if subdirs:
+                        for subdir in utils.get_subdirectories(str(option_dir_to_update)):
+                            step_res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
+                    else: # last subdir 
+                        step_res_cap.to_csv(str(Path(option_dir_to_update, "ResidualCapacity.csv")), index=False)
                         
                     next_step += 1
         

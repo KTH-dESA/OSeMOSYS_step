@@ -192,7 +192,7 @@ def get_option_combinations_per_step(options_per_step: Dict[int, List[List[str]]
     
     option_combos_per_step = {}
     max_step = max(list(options_per_step))
-    for step_num in range(0, max_step):
+    for step_num in range(0, max_step + 1):
         current_step = step_num
         last_step = current_step - 1
        
@@ -256,7 +256,7 @@ def create_option_directories(root_dir: str, options_per_step: Dict[int, List[st
     
     option_combos = get_option_combinations_per_step(options_per_step)
     max_step = max(list(options_per_step))
-    for step_num in range(0, max_step):
+    for step_num in range(0, max_step + 1):
         
         if step_num not in list(option_combos):
             logger.info(f"No scenario data for step {step_num}")
@@ -303,7 +303,7 @@ def copy_reference_option_data(src_dir: str, dst_dir: str, options_per_step: Dic
     
     option_combos = get_option_combinations_per_step(options_per_step)
     max_step = max(list(options_per_step))
-    for step_num in range(0, max_step):
+    for step_num in range(0, max_step + 1):
         if step_num not in list(option_combos):
             logger.info(f"No scenario data for step {step_num}")
             continue
@@ -532,7 +532,7 @@ def get_new_capacity_lifetime(op_life: pd.DataFrame, new_capacity: pd.DataFrame)
                 technology to lookup operational life for
             mapper: Dict[str,int]
                 technology to operational life mapper
-        Reeturns:
+        Returns:
             List[int]: 
                 Years that the capacity will be available for
         """
@@ -573,6 +573,5 @@ def merge_res_capacites(old_res_cap: pd.DataFrame, new_res_cap: pd.DataFrame) ->
     if not list(old_res_cap.columns) == list(new_res_cap.columns):
         raise ValueError("Columns name do not match")
     df = pd.concat([old_res_cap, new_res_cap])
-    # print(df)
     df = df.groupby(by=["REGION", "TECHNOLOGY", "YEAR"]).sum().reset_index()
     return df

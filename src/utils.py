@@ -3,10 +3,11 @@
 import os
 import shutil
 from pathlib import Path 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 from yaml import load 
 import pandas as pd
 import sys
+import glob
 from otoole.utils import UniqueKeyLoader
 
 import logging
@@ -81,7 +82,7 @@ def check_for_subdirectory(directory: str):
             return True
     return False
 
-def merge_dataframes(src: pd.DataFrame, dst: pd.DataFrame, years: list[int] = None) -> pd.DataFrame:
+def concat_dataframes(src: pd.DataFrame, dst: pd.DataFrame, years: list[int] = None) -> pd.DataFrame:
     """Combines two dfs together
     
     Args:
@@ -109,3 +110,27 @@ def merge_dataframes(src: pd.DataFrame, dst: pd.DataFrame, years: list[int] = No
     elif all(param in df.columns.to_list() for param in ["REGION", "YEAR"]):
         df = df.sort_values(by = ["REGION", "YEAR"])
     return df
+
+def get_options_from_path(file_path: str, extension: str = None) -> Union[List[str], None]:
+    """Parses a path to return options
+    
+    Args:
+        file_path: str
+            directory path 
+            
+    Returns:
+        Options based on looking for step_*/ in the filepath 
+    
+    Example:
+        >>> get_options_from_path("../steps/step_4/1E0-1C1/2D1/model.sol")
+        >>> ["1E0-1C1", "2D1"]
+    """
+    if extension:
+        dirs = [part for part in Path(file_path).parts if not part.endswith(extension)]
+    else:
+        dirs = [part for part in Path(file_path).parts if not part.endswith(extension)]
+    for num, dir in enumerate(dirs):
+        if dir.startswith("step_"):
+            return dirs[num + 1:]
+    return None
+    
