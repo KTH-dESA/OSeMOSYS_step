@@ -97,10 +97,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
 
     # get step length parameters 
     actual_years_per_step, modelled_years_per_step, num_steps = ds.split_data(input_data, step_length)
-    # print(actual_years_per_step)
-    # print(modelled_years_per_step)
-    # print(num_steps)
-    
+
     # dictionary for steps with new scenarios
     steps = mu.get_step_data(path_param) # returns Dict[int, Dict[str, pd.DataFrame]]
     
@@ -110,7 +107,6 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     step_options = mu.append_step_num_to_option(step_options) 
     
     # create option directores in data/
-    print(step_options)
     mu.create_option_directories(str(data_dir), step_options, step_directories=True)
 
     # create option directories in steps/

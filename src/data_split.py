@@ -130,7 +130,7 @@ def split_data(datafile: str, step_size: List[int]) -> Tuple[Dict, int]:
     if len(step_size) < 2:
         for i in range(all_steps):
             start = step_size[0] * i
-            if i + 1 < full_steps:
+            if i + 1 <= full_steps:
                 end_model = start + (step_size[0] * 2)
                 end_actual = start + step_size[0]
                 model_step_years = m_period.iloc[start:end_model]["VALUE"].to_list()
