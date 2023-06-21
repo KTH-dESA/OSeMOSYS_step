@@ -36,15 +36,14 @@ def read_otoole_config(config: str) -> Dict[str,Any]:
         contents = load(f, Loader=UniqueKeyLoader)
     return contents
 
-def format_step_input(steps: Any) -> List[int]:
+def format_step_input(steps: Tuple) -> List[int]:
     """Checks for proper formatting of step input"""
-    if not isinstance(steps, list):
-        if not isinstance(steps, int):
-            logger.error(f"Step must be of type int or List[int]. Recieved type {type(steps)}")
-        else:
-            steps = [steps]
+    for s in steps:
+        if not isinstance(s, int):
+            logger.warning(f"Step must be of type int. Recieved type {type(s)} for step {s}")
     if len(steps) > 2:
         logger.error(f"Step must be less than 2 values. Recieved length of {len(steps)}")
+        sys.exit()
     
     return [int(s) for s in steps]
 

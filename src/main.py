@@ -28,8 +28,6 @@ import sys
 import glob
 
 
-path_log = os.path.join("..", "logs", "log.log")
-logging.basicConfig(filename=path_log, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 @click.command()
@@ -54,21 +52,23 @@ logger = logging.getLogger(__name__)
 def main(input_data: str, step_length: int, path_param: str, cores: int, solver=None):
     """Main entry point for workflow"""
 
-    # set up solver logs
-    path_sol_logs = os.sep.join(["..", "logs", "solv_logs"])
-    try: 
-        os.mkdir(path_sol_logs)
-    except FileExistsError:
-        pass
-    
     ##########################################################################
-    # Remove previous run data
+    # Setup dirctories
     ##########################################################################
     
     data_dir = Path("..", "data")
     step_dir = Path("..", "steps")
     results_dir = Path("..", "results")
     model_dir = Path("..", "model")
+    logs_dir = Path("..", "logs")
+    
+    for f in glob.glob(str(logs_dir / "*.log")):
+        os.remove(f)
+    logging.basicConfig(filename=str(Path(logs_dir, "log.log")), level=logging.WARNING)
+    
+    ##########################################################################
+    # Remove previous run data
+    ##########################################################################
     
     for dir in glob.glob(str(data_dir / "data*/")):
         # remove both "data/" and "data_*/" folders
@@ -83,7 +83,11 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         
     for dir in glob.glob(str(step_dir / "*/")):
         shutil.rmtree(dir)
-        
+
+    # for f in glob.glob(str(logs_dir / "*.log")):
+    #     os.remove(f)
+    # Path(logs_dir, "logs.log").touch()
+
     ##########################################################################
     # Setup data and folder structure 
     ##########################################################################
@@ -340,8 +344,10 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         ######################################################################
 
         if failed_sols:
-            print(f"Models {failed_sols} failed solving")
             for failed_sol in failed_sols:
+                
+                logger.warning(f"Model {failed_sol} failed solving")
+                
                 # get failed options
                 failed_options = utils.get_options_from_path(failed_sol, ".sol") # returns ["1E0-1C0", "2C1"]
                 
@@ -400,7 +406,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             sol_results_dir = Path(step_dir, f"step_{step}", "results")
             if not sol_results_dir.exists():
                 logger.error("All runs failed")
-                sys.exit("All runs failed :(")
+                sys.exit()
             for subdir in utils.get_subdirectories(str(results_dir)):
                 for result_file in sol_results_dir.glob("*"):
                     src = result_file
