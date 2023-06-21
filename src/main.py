@@ -204,6 +204,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     csvs = csvs.joinpath(each_option)
                     data_file = data_file.joinpath(each_option)
                 if not data_file.exists(): 
+                    logger.warning(f"{str(data_file)} not created")
                     failed = True
                 else:
                     data_file_pp = data_file.joinpath("data_pp.txt") # preprocessed 
@@ -226,6 +227,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             datafile = Path(step_dir, f"step_{step}", "data_pp.txt")
             exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
             if exit_code == 1:
+                logger.warning(f"{str(lp_file)} could not be created")
                 failed_lps.append(lp_file)
         else:
             for option in options:
@@ -238,6 +240,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 datafile = datafile.joinpath("data_pp.txt")
                 exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
                 if exit_code == 1:
+                    logger.warning(f"{str(lp_file)} could not be created")
                     failed_lps.append(lp_file)
 
         ######################################################################
@@ -258,7 +261,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 directory_path = directory_path.parent
             result_option_path = Path(results_dir).joinpath(*result_options)
             if result_option_path == results_dir:
-                print("Top level run failed :(")
+                logger.error("Top level run failed :(")
                 for item in result_option_path.glob('*'):
                     if not item == ".gitignore":
                         shutil.rmtree(item)

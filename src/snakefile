@@ -16,6 +16,8 @@ rule solve_lp:
         sol_file = "{option}.sol"
     params:
         ilp = "{option}.ilp"
+    log:
+        log = "../logs/{option}.log"
     shell: 
         """
         if [ {config[solver]} = gurobi ]
@@ -25,8 +27,6 @@ rule solve_lp:
           cbc {input.lp_file} solve -sec 1500 -solu {output.sol_file}
         fi
         """
-
-
 
 """
 Commented out cause you will need the transform script and sort results for CPLEX
