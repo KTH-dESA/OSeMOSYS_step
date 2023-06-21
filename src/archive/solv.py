@@ -1,5 +1,5 @@
 "This script conducts the runs of OSeMOSYS models within the OSeMOSYSstep function in cases another solver than glpk is selected"
-#%% Import of needed packages
+
 import gurobipy
 import logging as log
 import os
@@ -9,7 +9,8 @@ from otoole import WriteCsv
 from otoole import Context
 import subprocess as sp
 import sys
-#%% Create directory for results
+
+# Create directory for results
 def create_res_dir(path_res):
     try:
         os.mkdir(path_res)
@@ -17,7 +18,8 @@ def create_res_dir(path_res):
         log.info("%s couldn't be created" %path_res)
     
     return
-#%% Function to create lp file
+
+# Function to create lp file
 def create_lp(path_df):
     name_lp = path_df.split(os.sep)[-1].split('.')[0] + '.lp'
     path_lp = os.path.join(os.sep.join(path_df.split(os.sep)[:-1]),name_lp)
@@ -26,7 +28,8 @@ def create_lp(path_df):
     if not os.path.exists(path_lp):
         log.warning("%s couldn't be created" % path_lp)
     return path_lp
-#%% Function to solve lp file using gurobi
+
+# Function to solve lp file using gurobi
 def sol_gurobi(path_lp,path_res, scen_info):
     path_script = os.path.dirname(os.path.realpath(__file__))
     path_pkg = os.path.join(' ', os.sep.join(path_script.split(os.sep)[:-1]))
@@ -52,13 +55,15 @@ def sol_gurobi(path_lp,path_res, scen_info):
         log.warning('%s does not exist.' % path_lp)
 
     return path_sol
-#%% Function to solve lp file using cbc
+
+# Function to solve lp file using cbc
 def sol_cbc(path_lp):
     return path_sol
-#%% Function to solve lp file using cplex
+
+# Function to solve lp file using cplex
 def sol_cplex(path_lp):
     return path_sol
-#%% 
+ 
 "Function to convert gurobi sol file to csvs"
 def csv_gurobi(path_sol,path_res,p_df):
     reader = ReadGurobi()
@@ -68,7 +73,8 @@ def csv_gurobi(path_sol,path_res,p_df):
     converter.convert(path_sol,path_res,input_data=input_data)
     if os.path.exists(path_sol):
         os.remove(path_sol)
-#%% main function
+
+# main function
 def main(solver,path_df_prep,path_res):
     scen_sep = '|'
     scen_info = scen_sep.join(path_res.split(os.sep)[2:])
@@ -85,7 +91,8 @@ def main(solver,path_df_prep,path_res):
     path_complete = path_res + '.txt'
     file_done = open(path_complete, "w")
     file_done.close()
-#%% If run as script
+
+# If run as script
 if __name__ == '__main__':
     solver = str(sys.argv[1])
     path_df = str(sys.argv[2])

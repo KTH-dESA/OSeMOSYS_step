@@ -1,133 +1,253 @@
-# This script has the purpose to split the provided datapackage into several datapackages
-#%% Needed packages
+"""Module to split the input data on step years"""
+
 import sys
-import os
-from shutil import copyfile
-import subprocess as sp
 import pandas as pd
 import math
-import time
-from otoole import ReadDatafile
-from otoole import WriteDatapackage
+from otoole import ReadDatafile, ReadCsv
+from otoole import WriteCsv
 from otoole import Context
-#%% Convert datafile to datapackage
-def df_to_dp(path):
-    #path = '../data/utopia.txt' #for development
-    #file = '/utopia.txt' #for development
-    dp_path = '../data/datapackage'
-    os.mkdir(dp_path)
-    reader = ReadDatafile()
-    writer = WriteDatapackage()
-    converter = Context(read_strategy=reader, write_strategy=writer)
-    converter.convert(path, dp_path)
-    return dp_path
-#%% Read in csv files from datapackage
-def read_dp(dp_path):
-    #dp_path = '../data/datapackage' #for development
-    datafiles = next(os.walk(dp_path+'/data'))
-    dic = dict()
-    j = 0
-    for j in range(len(datafiles[2])):
-        dic[datafiles[2][j]] = pd.read_csv(dp_path+'/data/'+datafiles[2][j])
-    return dic
-#%% Create new csv files from original csvs
-def new_dp(dp_dic,years,step_nr,path):
-    #dic = dp_dic #for development
-    #years = step_years # for development
-    #step_nr = 1 # for development
-    path = path+str(step_nr)
-    try:
-        os.mkdir(path)
-    except OSError:
-        print("Creation of the directory %s failed" % path)
-    copyfile('../data/datapackage/datapackage.json',path+'/datapackage.json')
-    path = path + '/data'
-    try:
-        os.mkdir(path)
-    except OSError:
-        print("Creation of the directory %s failed" % path)
+from typing import Dict, Tuple, List, Any
+from pathlib import Path 
+import utils
+import logging
 
-    i = 0
-    for i in dp_dic:
-        if 'YEAR' in dp_dic[i].columns:
-            df = dp_dic[i]
-            m = df.YEAR.isin(years.VALUE)
-            df = df[m]
-            df.to_csv(path+'/'+i,index=False)
-        elif i=='YEAR.csv':
-            df = dp_dic[i]
-            m = df.VALUE.isin(years.VALUE)
-            df = df[m]
-            df.to_csv(path+'/'+i,index=False)
+logger = logging.getLogger(__name__)
+
+# def datafile_to_csv(datafile: str, csv_dir: str, config: Dict[str,Any]) -> None:
+#     """Converts datafile to folder of csvs
+    
+#     Args:
+#         datafile: str
+#             Path to datafile 
+#         csv_dir: str
+#             Path to directory of csv folder 
+#         config: Dict[str,Any]
+#             otoole configuration data
+#     """
+#     reader = ReadDatafile(user_config=config)
+#     writer = WriteCsv(user_config=config)
+#     converter = Context(read_strategy=reader, write_strategy=writer)
+#     converter.convert(datafile, csv_dir)
+    
+# def read_csv(csv_dir: str, config: Dict[str,Any], data: bool = True) -> Tuple[Dict[str, pd.DataFrame], Dict[str, Any]]:
+#     """Reads in csv data using otoole
+    
+#     Returns: 
+#         Tuple[Dict[str, pd.DataFrame], Dict[str, Any]]
+#             First dictionary is the data 
+#             Second dictionary is the default values
+#     """
+#     reader = ReadCsv(user_config=config)
+#     return reader.read(filepath=csv_dir)
+
+def get_step_data(data: Dict[str, pd.DataFrame], years: List[int]) -> Dict[str, pd.DataFrame]:
+    """Filter otoole data based on years 
+    
+    Note that the data is the same format as otoole; mulitindex dataframe 
+    
+    Args:
+        data: Dict[str, pd.DataFrame]
+            Complete set of reference data 
+        years: List[int]
+            years to filter over 
+            
+    Returns:
+        Dict[str, pd.DataFrame]
+            Filtered data over the years 
+    """
+    out = {}
+    
+    for name, df in data.items():
+        if df.empty:
+            out[name] = df
+        elif "YEAR" in df.index.names:
+            df = df.reset_index()
+            cols = list(df)
+            cols.remove("VALUE")
+            out[name] = df.loc[df["YEAR"].isin(years)].set_index(cols)
+        elif name == "YEAR":
+            out[name] = df.loc[df["VALUE"].isin(years)]
         else:
-            df = dp_dic[i]
-            df.to_csv(path+'/'+i,index=False)
-    while not os.path.exists(path+'/YearSplit.csv'):
-        time.sleep(5)
-    #Write csv for param ResultsPath, might need adjustment depending on implementation of ResultsPath in otoole
-#    rp_csv = pd.Series(['VALUE','../steps/step'+str(step_nr)])
-#    rp_csv.to_csv(path+'/ResultsPath.csv',index=False,header=False)
-#%% Function to run the script
-def split_dp(directory,step_size):
-    #%% Check if provided directory is correct and contains data
-    if os.path.exists(directory) and os.path.isdir(directory):
-        if not os.listdir(directory):
-            print("Directory is empty")
-    else:
-        print("Given directory doesn't exist")
-    # Create datapackage from datafile
-    dp_path = df_to_dp(directory)
+            out[name] = df
+            
+    return out 
+    
+# Function to run the script
+def split_data(data: Dict[str, pd.DataFrame], step_size: List[int]) -> Tuple[Dict[int, List[int]], Dict[int, List[int]], int]:
+    """Reads in and splits data for steps 
+    
+    Args: 
+        data: Dict[str, pd.DataFrame]
+            otoole internal datastore structure 
+        step_size: List[int]
+            Years in each step. If one value provided, equal step sizes. If 
+            multiple values provided, the first values represents the first 
+            step, with the remaining step sizes being the second value
+    
+    Returns:
+        actual_years_per_step: Dict 
+            {step: actual years in step}
+            Actual years per step (ie. 1995-2000 for a 5yr step)
+        model_years_per_step: Dict {step: modelled years in step}
+            Modelled years per step (ie. 1995-2005 for a 5yr step)
+        full_steps: int
+            Number of full steps in model run indexed from zero
+    """
+    
     # Derive information on modelling period
-    m_period = pd.read_csv(dp_path+'/data/YEAR.csv')
-    n_years = len(m_period.index)
-    if type(step_size)==int:
-        n_steps = n_years/step_size
+    m_years = data['YEAR']["VALUE"].to_list() # modeled years
+    n_years = len(m_years) # number of years
+
+    if len(step_size) < 2:
+        n_steps = n_years / step_size[0]
     else:
-        n_steps = 1+(n_years-step_size[0])/step_size[1]
-    full_steps = math.floor(n_steps)
-    all_steps = math.ceil(n_steps)
-    # Read in datapackage
-    dp_dic = read_dp(dp_path)
-    dic_yr_step = dict()
-    i = 0
-    if type(step_size)==int:
-        for i in range(all_steps):
-            if i+1 < full_steps:
-                start = step_size * i
-                end = start+(step_size*2)
-                step_years = m_period.iloc[start:end]
-                dic_yr_step[i] = step_years
-                new_dp(dp_dic,step_years,i,dp_path)
+        n_steps = 1 + (n_years - step_size[0]) / step_size[1]
+    all_steps = math.ceil(n_steps)  
+    full_steps = math.floor(n_steps) # the last step will often be cut short
+    
+    model_years_per_step = {} # actual years plus extra at end
+    actual_years_per_step = {} # actual years per step 
+    
+    # parse out data based on number of years 
+    step_num = 0
+    if len(step_size) < 2:
+        
+        for step_num in range(all_steps):
+
+            start = m_years[0] + step_size[0] * step_num
+            
+            if step_num < full_steps:
+                end_model = start + (step_size[0] * 2)
+                end_actual = start + step_size[0]
             else:
-                start = i * step_size
-                step_years = m_period.iloc[start:]
-                dic_yr_step[i] = step_years
-                new_dp(dp_dic,step_years,i,dp_path)
+                end_model = m_years[-1] + 1
+                end_actual = m_years[-1] + 1
+                
+            model_step_years = [y for y in m_years if y in range(start, end_model)]
+            actual_step_years = [y for y in m_years if y in range(start, end_actual)]
+            
+            model_years_per_step[step_num] = model_step_years
+            actual_years_per_step[step_num] = actual_step_years
+
     else:
-        for i in range(all_steps):
-            if i==0:
-                start = 0
-                end = step_size[0]*2
-                step_years = m_period.iloc[start:end]
-                dic_yr_step[i] = step_years
-                new_dp(dp_dic,step_years,i,dp_path)
-            elif i+1 < full_steps:
-                start = step_size[0] + step_size[1] * (i-1)
-                end = start+(step_size[1]*2)
-                step_years = m_period.iloc[start:end]
-                dic_yr_step[i] = step_years
-                new_dp(dp_dic,step_years,i,dp_path)
+        for step_num in range(all_steps):
+            
+            if step_num == 0: 
+                start = m_years[0]
+                end_model = step_size[0] * 2
+                end_actual = step_size[0]
+            elif step_num < full_steps:
+                start =  m_years[0] + step_size[0] + step_size[1] * (step_num - 1)
+                end_model = start + (step_size[1] * 2)
+                end_actual = start + step_size[1]
             else:
-                start = step_size[0] + (i-1) * step_size[1]
-                step_years = m_period.iloc[start:]
-                dic_yr_step[i] = step_years
-                new_dp(dp_dic,step_years,i,dp_path)
-    return dic_yr_step,full_steps
-#%% data_split executed as script
+                start =  m_years[0] + step_size[0] + (step_num - 1) * step_size[1]
+                end_model = m_years[-1]
+                end_actual = m_years[-1]
+                
+            step_years_model = [y for y in m_years if y in range(start, end_model)]
+            step_years_actual = [y for y in m_years if y in range(start, end_actual)]
+                
+            model_years_per_step[step_num] = step_years_model
+            actual_years_per_step[step_num] = step_years_actual
+    
+    # retun (all_steps-1) beacause indexing of steps starts at 0 
+    return actual_years_per_step, model_years_per_step, (all_steps - 1)
+
+
+# def split_data_old(datafile: str, step_size: List[int]) -> Tuple[Dict, int]:
+#     """Reads in and splits data for steps 
+    
+#     Args: 
+#         datafile: str
+#             Path to directory
+#         step_size: List[int]
+#             Years in each step. If one value provided, equal step sizes. If 
+#             multiple values provided, the first values represents the first 
+#             step, with the remaining step sizes being the second value
+    
+#     Returns:
+#         actual_years_per_step: Dict {step: actual years in step}
+#             Actual years per step (ie. 1995-2000 for a 5yr step)
+#         model_years_per_step: Dict {step: modelled years in step}
+#             Modelled years per step (ie. 1995-2005 for a 5yr step)
+#         full_steps: int
+#             Number of full steps in model run indexed from zero
+#     """
+    
+#     # check for directory structure 
+#     data_dir = Path(datafile).parents[0]
+#     utils.check_for_directory(data_dir)
+    
+#     # Create folder of csvs from datafile
+#     csv_dir = Path(data_dir, "data")
+#     config_path = Path(data_dir, "otoole_config.yaml") # chnage this to an input 
+#     config = utils.read_otoole_config(str(config_path))
+#     datafile_to_csv(str(datafile), str(csv_dir), config)
+    
+#     # Derive information on modelling period
+#     m_period = pd.read_csv(Path(csv_dir, "YEAR.csv"))
+#     n_years = len(m_period.index)
+#     if len(step_size) < 2:
+#         n_steps = n_years / step_size[0]
+#     else:
+#         n_steps = 1 + (n_years - step_size[0]) / step_size[1]
+#     full_steps = math.floor(n_steps)
+#     all_steps = math.ceil(n_steps)
+    
+#     # Read in reference csv data
+#     otoole_reader = read_csv(str(csv_dir), config)
+#     data = otoole_reader[0]
+#     default_values = otoole_reader[1]
+#     model_years_per_step = {} # actual years plus extra at end
+#     actual_years_per_step = {} # actual years per step 
+    
+#     # parse out data based on number of years 
+#     i = 0
+#     if len(step_size) < 2:
+#         for i in range(all_steps):
+#             start = step_size[0] * i
+#             if i + 1 <= full_steps:
+#                 end_model = start + (step_size[0] * 2)
+#                 end_actual = start + step_size[0]
+#                 model_step_years = m_period.iloc[start:end_model]["VALUE"].to_list()
+#                 actual_step_years = m_period.iloc[start:end_actual]["VALUE"].to_list()
+#             else:
+#                 model_step_years = m_period.iloc[start:]["VALUE"].to_list()
+#                 actual_step_years = m_period.iloc[start:]["VALUE"].to_list()
+#             model_years_per_step[i] = model_step_years
+#             actual_years_per_step[i] = actual_step_years
+#             step_data = get_step_data(data, model_step_years)
+#             write_csv(step_data, default_values, str(Path(data_dir, f"data_{i}")), config)
+#             logger.info(f"Wrote data for step {i}")
+#     else:
+#         for i in range(all_steps):
+#             if i == 0:
+#                 start = 0
+#                 end_model = step_size[0] * 2
+#                 end_actual = step_size[0]
+#                 step_years_model = m_period.iloc[start:end_model]["VALUE"].to_list()
+#                 step_years_actual = m_period.iloc[start:end_actual]["VALUE"].to_list()
+#             elif i + 1 < full_steps:
+#                 start = step_size[0] + step_size[1] * (i - 1)
+#                 end_model = start + (step_size[1] * 2)
+#                 end_actual = start + step_size[1]
+#                 step_years_model = m_period.iloc[start:end_model]["VALUE"].to_list()
+#                 step_years_actual = m_period.iloc[start:end_actual]["VALUE"].to_list()
+#             else:
+#                 start = step_size[0] + (i - 1) * step_size[1]
+#                 step_years_model = m_period.iloc[start:]["VALUE"].to_list()
+#                 step_years_actual = m_period.iloc[start:]["VALUE"].to_list()
+#             model_years_per_step[i] = step_years_model
+#             actual_years_per_step[i] = step_years_actual
+#             step_data = get_step_data(data, step_years_model)
+#             write_csv(step_data, default_values, str(Path(data_dir, f"data_{i}")), config)
+#             logger.info(f"Wrote data for step {i}")
+                
+#     return actual_years_per_step, model_years_per_step, full_steps
+
 if __name__ == '__main__':
-    #%% Inputs
-    #path = '../data/utopia.txt' #for developing
-    #step = [6,10] # for developing
     path = sys.argv[1]
-    step = sys.argv[2]
-    dic_yr_step = split_dp(path,step)
+    step = int(sys.argv[2])
+    steps = utils.format_step_input(step)
+    split_data(path, steps)

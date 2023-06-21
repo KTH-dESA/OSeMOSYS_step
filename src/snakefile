@@ -1,0 +1,48 @@
+
+configfile: "../data/config.yaml"
+
+options = [x[:-3] for x in config["files"]] # remove .csv
+
+rule all:
+    input: 
+        expand("{option}.sol", option=options)
+    
+rule solve_lp:
+    message:
+        'Solving model via {config[solver]}...'
+    input:
+        lp_file = "{option}.lp"
+    output:
+        sol_file = "{option}.sol"
+    params:
+        ilp = "{option}.ilp"
+    shell: 
+        """
+        if [ {config[solver]} = gurobi ]
+        then
+          gurobi_cl Method=2 ResultFile={output.sol_file} ResultFile={params.ilp} {input.lp_file}
+        else
+          cbc {input.lp_file} solve -sec 1500 -solu {output.sol_file}
+        fi
+        """
+
+
+
+"""
+Commented out cause you will need the transform script and sort results for CPLEX
+
+
+if [ {config[solver]} = gurobi ]
+then
+    gurobi_cl Method=2 ResultFile={output.sol_file} ResultFile={params.ilp} {input.lp_file}
+elif [ {config[solver]} = cplex ]
+then
+    cplex -c "read {input.lp_file}" "optimize" "write {output.sol_file}"
+else
+    cbc {input.lp_file} solve -sec 1500 -solu {output.sol_file}
+fi
+
+to add in glpk as the solver, we will either need to change the results path 
+(which is quite cumbersum) or just change the working directory (pro safer)
+
+"""
