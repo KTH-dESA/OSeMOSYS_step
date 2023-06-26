@@ -134,8 +134,8 @@ def split_data(data: Dict[str, pd.DataFrame], step_size: List[int]) -> Tuple[Dic
             
             if step_num == 0: 
                 start = m_years[0]
-                end_model = step_size[0] * 2
-                end_actual = step_size[0]
+                end_model = start + step_size[0] * 2
+                end_actual = start + step_size[0]
             elif step_num < full_steps:
                 start =  m_years[0] + step_size[0] + step_size[1] * (step_num - 1)
                 end_model = start + (step_size[1] * 2)
