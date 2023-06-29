@@ -28,8 +28,6 @@ import sys
 import glob
 
 
-path_log = os.path.join("..", "logs", "log.log")
-logging.basicConfig(filename=path_log, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 @click.command()
@@ -54,21 +52,23 @@ logger = logging.getLogger(__name__)
 def main(input_data: str, step_length: int, path_param: str, cores: int, solver=None):
     """Main entry point for workflow"""
 
-    # set up solver logs
-    path_sol_logs = os.sep.join(["..", "logs", "solv_logs"])
-    try: 
-        os.mkdir(path_sol_logs)
-    except FileExistsError:
-        pass
-    
     ##########################################################################
-    # Remove previous run data
+    # Setup dirctories
     ##########################################################################
     
     data_dir = Path("..", "data")
     step_dir = Path("..", "steps")
     results_dir = Path("..", "results")
     model_dir = Path("..", "model")
+    logs_dir = Path("..", "logs")
+    
+    for f in glob.glob(str(logs_dir / "*.log")):
+        os.remove(f)
+    logging.basicConfig(filename=str(Path(logs_dir, "log.log")), level=logging.WARNING)
+    
+    ##########################################################################
+    # Remove previous run data
+    ##########################################################################
     
     for dir in glob.glob(str(data_dir / "data*/")):
         # remove both "data/" and "data_*/" folders
@@ -83,7 +83,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         
     for dir in glob.glob(str(step_dir / "*/")):
         shutil.rmtree(dir)
-        
+
+    shutil.rmtree(str(Path(logs_dir, "solves")))
+
     ##########################################################################
     # Setup data and folder structure 
     ##########################################################################
@@ -145,6 +147,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     option_data_by_param = mu.get_param_data_per_option(step_option_data) # Dict[str, Dict[str, pd.DataFrame]]
 
     for step_num in range(0, num_steps + 1):
+        
         step_dir_number = Path(data_dir, f"step_{step_num}")
         
         # get grouped list of options to apply - ie. [A0-B1, C0]
@@ -180,8 +183,6 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     
     for step, options in tqdm(csv_dirs.items(), total=len(csv_dirs), desc="Building and Solving Models", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
 
-        failed = False # for tracking failed builds / solves
-        
         ######################################################################
         # Create Datafile
         ######################################################################
@@ -200,15 +201,13 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     csvs = csvs.joinpath(each_option)
                     data_file = data_file.joinpath(each_option)
                 if not data_file.exists(): 
-                    failed = True
+                    logger.warning(f"{str(data_file)} not created")
+                    # failed = True
                 else:
                     data_file_pp = data_file.joinpath("data_pp.txt") # preprocessed 
                     data_file = data_file.joinpath("data.txt") # need non-preprocessed for otoole results
                     mu.create_datafile(csvs, data_file, otoole_config)
                     preprocess_data.main("otoole", str(data_file), str(data_file_pp))
-        
-        if failed:
-            continue
 
         ######################################################################
         # Create LP file 
@@ -222,6 +221,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             datafile = Path(step_dir, f"step_{step}", "data_pp.txt")
             exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
             if exit_code == 1:
+                logger.warning(f"{str(lp_file)} could not be created")
                 failed_lps.append(lp_file)
         else:
             for option in options:
@@ -234,6 +234,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 datafile = datafile.joinpath("data_pp.txt")
                 exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file))
                 if exit_code == 1:
+                    logger.warning(f"{str(lp_file)} could not be created")
                     failed_lps.append(lp_file)
 
         ######################################################################
@@ -254,7 +255,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 directory_path = directory_path.parent
             result_option_path = Path(results_dir).joinpath(*result_options)
             if result_option_path == results_dir:
-                print("Top level run failed :(")
+                logger.error("Top level run failed :(")
                 for item in result_option_path.glob('*'):
                     if not item == ".gitignore":
                         shutil.rmtree(item)
@@ -281,7 +282,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 for each_option in option:
                     lp_file = lp_file.joinpath(each_option)
                 lp_file = lp_file.joinpath("model.lp")
-                lps_to_solve.append(str(lp_file))
+                if lp_file.exists():
+                    lps_to_solve.append(str(lp_file))
                 
         # create a config file for snakemake 
         
@@ -331,7 +333,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 sol_file = sol_file.joinpath("model.sol")
                 if not sol_file.exists():
                     failed_sols.append(str(sol_file))
-                if solver == "cbc":
+                elif solver == "cbc":
                     if solve.check_cbc_feasibility(str(sol_file)) == 1:
                         failed_sols.append(str(sol_file))
 
@@ -340,8 +342,10 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         ######################################################################
 
         if failed_sols:
-            print(f"Models {failed_sols} failed solving")
             for failed_sol in failed_sols:
+                
+                logger.warning(f"Model {failed_sol} failed solving")
+                
                 # get failed options
                 failed_options = utils.get_options_from_path(failed_sol, ".sol") # returns ["1E0-1C0", "2C1"]
                 
@@ -400,7 +404,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             sol_results_dir = Path(step_dir, f"step_{step}", "results")
             if not sol_results_dir.exists():
                 logger.error("All runs failed")
-                sys.exit("All runs failed :(")
+                sys.exit()
             for subdir in utils.get_subdirectories(str(results_dir)):
                 for result_file in sol_results_dir.glob("*"):
                     src = result_file

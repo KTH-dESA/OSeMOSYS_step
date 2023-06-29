@@ -1,21 +1,24 @@
 
 configfile: "../data/config.yaml"
 
-options = [x[:-3] for x in config["files"]] # remove .csv
+options = [x[9:-3] for x in config["files"]] # extract out only the option path
+print(options)
 
 rule all:
     input: 
-        expand("{option}.sol", option=options)
+        expand("../steps/{option}.sol", option=options)
     
 rule solve_lp:
     message:
         'Solving model via {config[solver]}...'
     input:
-        lp_file = "{option}.lp"
+        lp_file = "../steps/{option}.lp"
     output:
-        sol_file = "{option}.sol"
+        sol_file = "../steps/{option}.sol"
     params:
-        ilp = "{option}.ilp"
+        ilp = "../steps/{option}.ilp"
+    log:
+        log = "../logs/solves/{option}.log"
     shell: 
         """
         if [ {config[solver]} = gurobi ]
@@ -23,10 +26,8 @@ rule solve_lp:
           gurobi_cl Method=2 ResultFile={output.sol_file} ResultFile={params.ilp} {input.lp_file}
         else
           cbc {input.lp_file} solve -sec 1500 -solu {output.sol_file}
-        fi
+        fi > {log.log}
         """
-
-
 
 """
 Commented out cause you will need the transform script and sort results for CPLEX
