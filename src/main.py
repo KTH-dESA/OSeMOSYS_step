@@ -84,9 +84,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     for dir in glob.glob(str(step_dir / "*/")):
         shutil.rmtree(dir)
 
-    # for f in glob.glob(str(logs_dir / "*.log")):
-    #     os.remove(f)
-    # Path(logs_dir, "logs.log").touch()
+    shutil.rmtree(str(Path(logs_dir, "solves")))
 
     ##########################################################################
     # Setup data and folder structure 
@@ -149,6 +147,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     option_data_by_param = mu.get_param_data_per_option(step_option_data) # Dict[str, Dict[str, pd.DataFrame]]
 
     for step_num in range(0, num_steps + 1):
+        
         step_dir_number = Path(data_dir, f"step_{step_num}")
         
         # get grouped list of options to apply - ie. [A0-B1, C0]
@@ -184,8 +183,6 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     
     for step, options in tqdm(csv_dirs.items(), total=len(csv_dirs), desc="Building and Solving Models", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
 
-        failed = False # for tracking failed builds / solves
-        
         ######################################################################
         # Create Datafile
         ######################################################################
@@ -205,15 +202,12 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     data_file = data_file.joinpath(each_option)
                 if not data_file.exists(): 
                     logger.warning(f"{str(data_file)} not created")
-                    failed = True
+                    # failed = True
                 else:
                     data_file_pp = data_file.joinpath("data_pp.txt") # preprocessed 
                     data_file = data_file.joinpath("data.txt") # need non-preprocessed for otoole results
                     mu.create_datafile(csvs, data_file, otoole_config)
                     preprocess_data.main("otoole", str(data_file), str(data_file_pp))
-        
-        if failed:
-            continue
 
         ######################################################################
         # Create LP file 
@@ -288,7 +282,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 for each_option in option:
                     lp_file = lp_file.joinpath(each_option)
                 lp_file = lp_file.joinpath("model.lp")
-                lps_to_solve.append(str(lp_file))
+                if lp_file.exists():
+                    lps_to_solve.append(str(lp_file))
                 
         # create a config file for snakemake 
         
@@ -338,7 +333,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 sol_file = sol_file.joinpath("model.sol")
                 if not sol_file.exists():
                     failed_sols.append(str(sol_file))
-                if solver == "cbc":
+                elif solver == "cbc":
                     if solve.check_cbc_feasibility(str(sol_file)) == 1:
                         failed_sols.append(str(sol_file))
 
