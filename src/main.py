@@ -84,7 +84,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     for dir in glob.glob(str(step_dir / "*/")):
         shutil.rmtree(dir)
 
-    shutil.rmtree(str(Path(logs_dir, "solves")))
+    if Path(logs_dir, "solves").exists():
+        shutil.rmtree(str(Path(logs_dir, "solves")))
 
     ##########################################################################
     # Setup data and folder structure 
