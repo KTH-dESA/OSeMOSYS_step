@@ -474,22 +474,15 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             new_res_cap = mu.get_new_capacity_lifetime(op_life, new_cap)
             res_cap = mu.merge_res_capacites(old_res_cap, new_res_cap)
             
-            # overwrite residual capacity values for all subsequent steps
+            # overwrite residual capacity values for next step
             next_step = step + 1
-            while next_step < num_steps:
 
-                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(actual_years_per_step[next_step])]
-                
-                # no more res capacity to pass on
-                if step_res_cap.empty:
-                    break
-                
+            step_res_cap = res_cap.loc[res_cap["YEAR"].isin(modelled_years_per_step[next_step])]
+            
+            if not step_res_cap.empty: 
                 step_dir_to_update = Path(data_dir, f"step_{next_step}")
-                
                 for subdir in utils.get_subdirectories(str(step_dir_to_update)):
                     step_res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
-                    
-                next_step += 1
 
         else:
             
@@ -514,28 +507,26 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 new_res_cap = mu.get_new_capacity_lifetime(op_life, new_cap)
                 res_cap = mu.merge_res_capacites(old_res_cap, new_res_cap)
                 
-                # overwrite residual capacity values for all subsequent steps
+                # overwrite residual capacity values
                 next_step = step + 1
-                while next_step < num_steps:
-                    
-                    step_res_cap = res_cap.loc[res_cap["YEAR"].isin(actual_years_per_step[next_step])]
+                
+                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(actual_years_per_step[next_step])]
 
-                    # no more res capacity to pass on
-                    if step_res_cap.empty:
-                        break
+                if not step_res_cap.empty: 
                     
                     # apply max option level for the step 
                     option_dir_to_update = Path(data_dir, f"step_{next_step}")
                     for each_option in option:
                         option_dir_to_update = option_dir_to_update.joinpath(each_option)
+                        
                     subdirs = utils.get_subdirectories(str(option_dir_to_update))
                     if subdirs:
                         for subdir in utils.get_subdirectories(str(option_dir_to_update)):
                             step_res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
+                    
                     else: # last subdir 
                         step_res_cap.to_csv(str(Path(option_dir_to_update, "ResidualCapacity.csv")), index=False)
-                        
-                    next_step += 1
+                    
         
 
 if __name__ == '__main__':
