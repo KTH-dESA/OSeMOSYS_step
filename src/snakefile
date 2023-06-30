@@ -2,7 +2,6 @@
 configfile: "../data/config.yaml"
 
 options = [x[9:-9] for x in config["files"]] # extract out only the option path
-print(options)
 
 rule all:
     input: 
