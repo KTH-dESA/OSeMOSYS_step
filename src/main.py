@@ -510,7 +510,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 # overwrite residual capacity values
                 next_step = step + 1
                 
-                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(actual_years_per_step[next_step])]
+                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(modelled_years_per_step[next_step])]
 
                 if not step_res_cap.empty: 
                     
