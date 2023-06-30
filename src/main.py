@@ -471,6 +471,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             old_res_cap = pd.read_csv(str(Path(step_dir_number_data, "ResidualCapacity.csv")))
             op_life = pd.read_csv(str(Path(step_dir_number_data, "OperationalLife.csv")))
             new_cap = pd.read_csv(str(Path(step_dir_number_results, "NewCapacity.csv")))
+            new_cap = new_cap.loc[new_cap["YEAR"].isin(actual_years_per_step[step])]
             new_res_cap = mu.get_new_capacity_lifetime(op_life, new_cap)
             res_cap = mu.merge_res_capacites(old_res_cap, new_res_cap)
             
@@ -478,7 +479,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             next_step = step + 1
             while next_step < num_steps:
 
-                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(actual_years_per_step[next_step])]
+                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(modelled_years_per_step[next_step])]
                 
                 # no more res capacity to pass on
                 if step_res_cap.empty:
@@ -511,6 +512,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 old_res_cap = pd.read_csv(str(Path(option_dir_data, "ResidualCapacity.csv")))
                 op_life = pd.read_csv(str(Path(option_dir_data, "OperationalLife.csv")))
                 new_cap = pd.read_csv(str(Path(option_dir_results, "NewCapacity.csv")))
+                new_cap = new_cap.loc[new_cap["YEAR"].isin(actual_years_per_step[step])]
                 new_res_cap = mu.get_new_capacity_lifetime(op_life, new_cap)
                 res_cap = mu.merge_res_capacites(old_res_cap, new_res_cap)
                 
@@ -518,7 +520,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 next_step = step + 1
                 while next_step < num_steps:
                     
-                    step_res_cap = res_cap.loc[res_cap["YEAR"].isin(actual_years_per_step[next_step])]
+                    step_res_cap = res_cap.loc[res_cap["YEAR"].isin(modelled_years_per_step[next_step])]
 
                     # no more res capacity to pass on
                     if step_res_cap.empty:
