@@ -1,31 +1,38 @@
 
 configfile: "../data/config.yaml"
 
-options = [x[9:-3] for x in config["files"]] # extract out only the option path
+options = [x[9:-9] for x in config["files"]] # extract out only the option path
 print(options)
 
 rule all:
     input: 
-        expand("../steps/{option}.sol", option=options)
+        expand("../steps/{option}/model.sol", option=options)
     
 rule solve_lp:
     message:
         'Solving model via {config[solver]}...'
     input:
-        lp_file = "../steps/{option}.lp"
+        lp_file = "../steps/{option}/model.lp"
     output:
-        sol_file = "../steps/{option}.sol"
+        sol_file = "../steps/{option}/model.sol"
     params:
-        ilp = "../steps/{option}.ilp"
+        ilp = "../steps/{option}/model.ilp"
     log:
-        log = "../logs/solves/{option}.log"
+        log = "../logs/solves/{option}/model.log"
     shell: 
         """
         if [ {config[solver]} = gurobi ]
         then
           gurobi_cl Method=2 ResultFile={output.sol_file} ResultFile={params.ilp} {input.lp_file}
-        else
+        elif [ {config[solver]} = cbc ]
+        then
           cbc {input.lp_file} solve -sec 1500 -solu {output.sol_file}
+        elif [ {config[solver]} = glpk ]
+        then
+            cp ../model/osemosys.txt ../steps/{wildcards.option}/osemosys.txt &&
+            cd ../steps/{wildcards.option} &&
+            mkdir results &&
+            glpsol -m osemosys.txt -d data_pp.txt -w model.sol
         fi > {log.log}
         """
 
