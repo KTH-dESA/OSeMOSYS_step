@@ -322,12 +322,12 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             sol_file = Path(step_dir, f"step_{step}", "model.sol")
             if not sol_file.exists():
                 failed_sols.append(str(sol_file))
-            if solver == "cbc":
+            elif solver == "cbc":
                 if solve.check_cbc_feasibility(str(sol_file)) == 1:
                     failed_sols.append(str(sol_file))
-                elif solver == "glpk":
-                    if solve.check_glpk_feasibility(str(sol_file)) == 1:
-                        failed_sols.append(str(sol_file))
+            elif solver == "glpk":
+                if solve.check_glpk_feasibility(str(sol_file)) == 1:
+                    failed_sols.append(str(sol_file))
                     
         else:
             for option in options:
