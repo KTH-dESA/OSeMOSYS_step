@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 @click.option("--input_data", required=True, default= '../data/utopia.txt', 
               help="The path to the input datafile. relative from the src folder, e.g. '../data/utopia.txt'")
 @click.option("--solver", default="cbc", 
-              help="If another solver than 'cbc' is desired please indicate the solver. [gurobi]")
+              help="Available solvers are 'glpk', 'cbc', and 'gurobi'. Default is 'cbc'")
 @click.option("--cores", default=1, show_default=True, 
               help="Number of cores snakemake is allowed to use.")
 @click.option("--path_param", default=None, 

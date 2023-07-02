@@ -25,7 +25,7 @@ rule solve_lp:
           gurobi_cl Method=2 ResultFile={output.sol_file} ResultFile={params.ilp} {input.lp_file}
         elif [ {config[solver]} = cbc ]
         then
-          cbc {input.lp_file} solve -sec 1500 -solu {output.sol_file}
+          cbc {input.lp_file} solve -solu {output.sol_file}
         elif [ {config[solver]} = glpk ]
         then
             cp ../model/osemosys.txt ../steps/{wildcards.option}/osemosys.txt &&
