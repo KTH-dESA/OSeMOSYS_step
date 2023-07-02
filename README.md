@@ -1,5 +1,6 @@
 # OSeMOSYS step
-This repository contains a set of scripts to conduct model runs with limited foresight with OSeMOSYS models.
+This repository contains a set of scripts to conduct model runs with limited 
+foresight with OSeMOSYS models.
 
 # Directory Structure 
 
@@ -38,13 +39,13 @@ scenario you want to run. All scenario information must be nested under a
 `scenarios/` subdirectory.
 
 ### `data/scenarios`
-The `data/scenarios` subdirectory holds information on the decisions that 
-the model can make. Within this directory, numerically ordered subdirectories 
+The `data/scenarios` subdirectory holds information on the options (or decisions) 
+that the model can make. Within this directory, numerically ordered subdirectories 
 are created to hold information on each step. For example, if there are 5 steps 
-in the model run, there will be 5 subdirectories, each labeled 1 through 5. 
+in the model run, there will be 5 subdirectories, each labeled 0 through 4. 
 
 Within each `data/scenarios/#` subdirectory, CSV files hold information 
-on the decisions that can be made. Each CSV file must follow the formatting 
+on the options that can be made. Each CSV file must follow the formatting 
 shown below. 
 
 |             PARAMETER            | REGION | TECHNOLOGY | OPTION | YEAR | VALUE     |
@@ -60,9 +61,9 @@ shown below.
 | TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 1      | 2049 | 0         |
 | TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 1      | 2050 | 0         |
 
-Note, that the `OPTION` column will dictate whether the decision is made or not. For each 
+Note, that the `OPTION` column will dictate whether the option is made or not. For each 
 model run, either all data identifed as the `0` option or the `1` option will be used, 
-not both. 
+not both. There can be as many options as the modeller desires. 
 
 ## `model`
 
@@ -84,7 +85,7 @@ files, if using a different solver, this will be a text file.
 # Running Instructions 
 
 ## Objective
-Run a 5 step model, over the horizon of 2020 to 2050 that makes investment decesions 
+Run a 5 step model, over the horizon of 1990 to 2010 that makes investment decesions 
 about allowing investment in coal.
 
 ## 1. Add the model file 
@@ -165,14 +166,7 @@ in importing coal, importing RL1, and if RLu is allowed to run or not. Add the f
 | TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 1      | 2009 | 0         |
 | TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 1      | 2010 | 0         |
 
-## 4. Clean the working directory
-Ensure all previous data is removed through running the command 
-
-```bash 
-bash clean.sh
-```
-
-## 5. Run the workflow 
+## 4. Run the workflow 
 ```bash 
 cd src
 python main_ms.py --step_length 5 --input_data ../data/<datafile_name>.txt 
@@ -182,40 +176,40 @@ python main_ms.py --step_length 5 --input_data ../data/<datafile_name>.txt
 Under the results folder, there should now be results for all the 
 permutations of options. 
 
-For example, the results of implementing option 0 in decision A, option 1 in 
-decision B, and option 1 in decision C are nested under the folder `results/A0B1/C1`.
+For example, the results of implementing option 0 in scenario A, option 1 in 
+scenario B, and option 1 in scenario C are nested under the folder `results/1A0-1B1/2C1`.
 
 ```bash 
 OSeMOSYS_STEP
 ├── data
 ├── model
 ├── results
-│   ├── A0B0
-│   │   ├── C0
+│   ├── 1A0-1B0
+│   │   ├── 2C0
 │   │   │   ├── *.csv
 │   │   │   └── ...
-│   │   └── C1
+│   │   └── 2C1
 │   │       ├── *.csv
 │   │       └── ...
-│   ├── A0B1
-│   │   ├── C0
+│   ├── 1A0-1B1
+│   │   ├── 2C0
 │   │   │   ├── *.csv
 │   │   │   └── ...
-│   │   └── C1
+│   │   └── 2C1
 │   │       ├── *.csv
 │   │       └── ...
-│   ├── A1B0
-│   │   ├── C0
+│   ├── 1A1-1B0
+│   │   ├── 2C0
 │   │   │   ├── *.csv
 │   │   │   └── ...
-│   │   └── C1
+│   │   └── 2C1
 │   │       ├── *.csv
 │   │       └── ...
-│   └── A1B1
-│       ├── C0
+│   └── 1A1-1B1
+│       ├── 2C0
 │       │   ├── *.csv
 │       │   └── ...
-│       └── C1
+│       └── 2C1
 │           ├── *.csv
 │           └── ...
 ├── src
