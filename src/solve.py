@@ -76,7 +76,7 @@ def create_lp(datafile: str, lp_file: str, osemosys: str) -> int:
     
 
 def check_cbc_feasibility(sol: str) -> int:
-    """Checks if the CBC solution is infeasible
+    """Checks if the CBC solution is optimal
     
     Args:
         sol: str
@@ -95,5 +95,42 @@ def check_cbc_feasibility(sol: str) -> int:
         return 0
     else:
         return 1
+    
+def check_glpk_feasibility(sol: str) -> int:
+    """Checks if the GLPK solution is optimal
+    
+    Args:
+        sol: str
+            Path to CBC solution file 
+    
+    Returns:
+        0: int
+            If successful 
+        1: int
+            If not successful
+            
+    c Problem:    osemosys
+    c Rows:       3721
+    c Columns:    2280
+    c Non-zeros:  18069
+    c Status:     OPTIMAL
+    c Objective:  cost = 16068.9934 (MINimum)
+            
+    """
+    fifth_line = get_nth_line(sol, 5)
+    status = fifth_line.split(" ")[6]
+    status = status.strip()
+    if status == "OPTIMAL":
+        return 0
+    else:
+        return 1
+    
+def get_nth_line(file_path: str, n: int):
+    """Gets nth line from a textfile"""
+    with open(file_path, 'r') as file:
+        for i, line in enumerate(file, start=1):
+            if i == n:
+                return line
+    return None
     
     

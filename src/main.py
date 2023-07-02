@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 @click.option("--input_data", required=True, default= '../data/utopia.txt', 
               help="The path to the input datafile. relative from the src folder, e.g. '../data/utopia.txt'")
 @click.option("--solver", default="cbc", 
-              help="If another solver than 'glpk' is desired please indicate the solver. [gurobi]")
+              help="Available solvers are 'glpk', 'cbc', and 'gurobi'. Default is 'cbc'")
 @click.option("--cores", default=1, show_default=True, 
               help="Number of cores snakemake is allowed to use.")
 @click.option("--path_param", default=None, 
@@ -322,8 +322,11 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             sol_file = Path(step_dir, f"step_{step}", "model.sol")
             if not sol_file.exists():
                 failed_sols.append(str(sol_file))
-            if solver == "cbc":
+            elif solver == "cbc":
                 if solve.check_cbc_feasibility(str(sol_file)) == 1:
+                    failed_sols.append(str(sol_file))
+            elif solver == "glpk":
+                if solve.check_glpk_feasibility(str(sol_file)) == 1:
                     failed_sols.append(str(sol_file))
                     
         else:
@@ -336,6 +339,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     failed_sols.append(str(sol_file))
                 elif solver == "cbc":
                     if solve.check_cbc_feasibility(str(sol_file)) == 1:
+                        failed_sols.append(str(sol_file))
+                elif solver == "glpk":
+                    if solve.check_glpk_feasibility(str(sol_file)) == 1:
                         failed_sols.append(str(sol_file))
 
         ######################################################################
@@ -369,23 +375,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         ######################################################################
         # Generate result CSVs
         ######################################################################
- 
-        if not options:
-            sol_dir = Path(step_dir, f"step_{step}")
-            if sol_dir.exists():
-                sol_file = Path(sol_dir, "model.sol")
-                data_file = Path(sol_dir, "data.txt")
-                solve.generate_results(
-                    sol_file=str(sol_file), 
-                    solver=solver, 
-                    config=otoole_config, 
-                    data_file=str(data_file)
-                )
-        else:
-            for option in options:
+        if not solver == "glpk": #csvs already created 
+            if not options:
                 sol_dir = Path(step_dir, f"step_{step}")
-                for each_option in option:
-                    sol_dir = sol_dir.joinpath(each_option)
                 if sol_dir.exists():
                     sol_file = Path(sol_dir, "model.sol")
                     data_file = Path(sol_dir, "data.txt")
@@ -395,6 +387,20 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                         config=otoole_config, 
                         data_file=str(data_file)
                     )
+            else:
+                for option in options:
+                    sol_dir = Path(step_dir, f"step_{step}")
+                    for each_option in option:
+                        sol_dir = sol_dir.joinpath(each_option)
+                    if sol_dir.exists():
+                        sol_file = Path(sol_dir, "model.sol")
+                        data_file = Path(sol_dir, "data.txt")
+                        solve.generate_results(
+                            sol_file=str(sol_file), 
+                            solver=solver, 
+                            config=otoole_config, 
+                            data_file=str(data_file)
+                        )
  
         ######################################################################
         # Save Results 
