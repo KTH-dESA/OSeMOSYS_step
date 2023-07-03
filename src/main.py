@@ -491,7 +491,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             
             # overwrite residual capacity values for all subsequent steps
             next_step = step + 1
-            while next_step < num_steps:
+            while next_step < num_steps < + 1:
 
                 step_res_cap = res_cap.loc[res_cap["YEAR"].isin(modelled_years_per_step[next_step])]
                 
@@ -529,7 +529,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 
                 # overwrite residual capacity values for all subsequent steps
                 next_step = step + 1
-                while next_step < num_steps:
+                while next_step < num_steps < + 1:
                     
                     # apply to max option level for the step 
                     option_dir_to_update = Path(data_dir, f"step_{next_step}")
