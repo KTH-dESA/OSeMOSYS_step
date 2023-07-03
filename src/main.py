@@ -469,23 +469,31 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         if step + 1 > num_steps:
             continue
             
-        step_dir_number_data = Path(data_dir, f"step_{step}")
+        step_dir_data = Path(data_dir, f"step_{step}")
         
-        if not options:
+        options_next_step = csv_dirs[step+1]
+        
+        if not options_next_step: # check next step cause we need to apply data downstream
             
             # Get updated residual capacity values 
-            step_dir_number_results = Path(step_dir, f"step_{step}", "results")
-            old_res_cap = pd.read_csv(str(Path(step_dir_number_data, "ResidualCapacity.csv")))
-            op_life = pd.read_csv(str(Path(step_dir_number_data, "OperationalLife.csv")))
-            new_cap = pd.read_csv(str(Path(step_dir_number_results, "NewCapacity.csv")))
-            new_res_cap = mu.get_new_capacity_lifetime(op_life, new_cap)
-            res_cap = mu.merge_res_capacites(old_res_cap, new_res_cap)
+            next_step_dir_data = Path(data_dir, f"step_{step+1}")
+            step_dir_results = Path(step_dir, f"step_{step}", "results")
+            old_res_cap = pd.read_csv(str(Path(next_step_dir_data, "ResidualCapacity.csv")))
+            op_life = pd.read_csv(str(Path(step_dir_data, "OperationalLife.csv")))
+            new_cap = pd.read_csv(str(Path(step_dir_results, "NewCapacity.csv")))
+            
+            res_cap = mu.update_res_capacity(
+                res_capacity=old_res_cap,
+                op_life=op_life,
+                new_capacity=new_cap,
+                step_years=actual_years_per_step[step]
+            )
             
             # overwrite residual capacity values for all subsequent steps
             next_step = step + 1
             while next_step < num_steps:
 
-                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(actual_years_per_step[next_step])]
+                step_res_cap = res_cap.loc[res_cap["YEAR"].isin(modelled_years_per_step[next_step])]
                 
                 # no more res capacity to pass on
                 if step_res_cap.empty:
@@ -515,32 +523,40 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     continue
                 
                 # Get updated residual capacity values 
-                old_res_cap = pd.read_csv(str(Path(option_dir_data, "ResidualCapacity.csv")))
+
                 op_life = pd.read_csv(str(Path(option_dir_data, "OperationalLife.csv")))
                 new_cap = pd.read_csv(str(Path(option_dir_results, "NewCapacity.csv")))
-                new_res_cap = mu.get_new_capacity_lifetime(op_life, new_cap)
-                res_cap = mu.merge_res_capacites(old_res_cap, new_res_cap)
                 
                 # overwrite residual capacity values for all subsequent steps
                 next_step = step + 1
                 while next_step < num_steps:
                     
-                    step_res_cap = res_cap.loc[res_cap["YEAR"].isin(actual_years_per_step[next_step])]
-
-                    # no more res capacity to pass on
-                    if step_res_cap.empty:
-                        break
-                    
-                    # apply max option level for the step 
+                    # apply to max option level for the step 
                     option_dir_to_update = Path(data_dir, f"step_{next_step}")
                     for each_option in option:
                         option_dir_to_update = option_dir_to_update.joinpath(each_option)
                     subdirs = utils.get_subdirectories(str(option_dir_to_update))
                     if subdirs:
                         for subdir in utils.get_subdirectories(str(option_dir_to_update)):
-                            step_res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
+                            old_res_cap = pd.read_csv(str(Path(subdir, "ResidualCapacity.csv")))
+                            res_cap = mu.update_res_capacity(
+                                res_capacity=old_res_cap,
+                                op_life=op_life,
+                                new_capacity=new_cap,
+                                step_years=actual_years_per_step[step]
+                            )
+                            res_cap = res_cap.loc[res_cap["YEAR"].isin(modelled_years_per_step[next_step])]
+                            res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
                     else: # last subdir 
-                        step_res_cap.to_csv(str(Path(option_dir_to_update, "ResidualCapacity.csv")), index=False)
+                        old_res_cap = pd.read_csv(str(Path(option_dir_to_update, "ResidualCapacity.csv")))
+                        res_cap = mu.update_res_capacity(
+                            res_capacity=old_res_cap,
+                            op_life=op_life,
+                            new_capacity=new_cap,
+                            step_years=actual_years_per_step[step]
+                        )
+                        res_cap = res_cap.loc[res_cap["YEAR"].isin(modelled_years_per_step[next_step])]
+                        res_cap.to_csv(str(Path(option_dir_to_update, "ResidualCapacity.csv")), index=False)
                         
                     next_step += 1
         

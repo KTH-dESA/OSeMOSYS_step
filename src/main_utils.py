@@ -575,3 +575,18 @@ def merge_res_capacites(old_res_cap: pd.DataFrame, new_res_cap: pd.DataFrame) ->
     df = pd.concat([old_res_cap, new_res_cap])
     df = df.groupby(by=["REGION", "TECHNOLOGY", "YEAR"]).sum().reset_index()
     return df
+
+def update_res_capacity(res_capacity: pd.DataFrame, op_life: pd.DataFrame, new_capacity: pd.DataFrame, step_years: List[int]) -> pd.DataFrame:
+    """Updates residual capacity data for next step
+    
+    Args: 
+        res_capacity: pd.DataFrame, 
+        op_life: pd.DataFrame, 
+        new_capacity: pd.DataFrame, 
+        step_years: List[int]
+            Years in the step assocated with the NewCapacity
+    """
+    
+    new_capacity = new_capacity.loc[new_capacity["YEAR"].isin(step_years)]
+    new_res_cap = get_new_capacity_lifetime(op_life, new_capacity)
+    return merge_res_capacites(res_capacity, new_res_cap)
