@@ -50,7 +50,7 @@ def generate_results(sol_file: str, solver: str, config: Dict[str,Any], data_fil
     
     context.convert(sol_file, str(Path(sol_dir, "results")), input_data = input_data)
     
-def create_lp(datafile: str, lp_file: str, osemosys: str) -> int:
+def create_lp(datafile: str, lp_file: str, osemosys: str, log_file:str = None) -> int:
     """Create the LP file using GLPK
     
     Args: 
@@ -64,9 +64,14 @@ def create_lp(datafile: str, lp_file: str, osemosys: str) -> int:
         1: int
             If not successful
     """
-    cmd = f"glpsol -m {osemosys} -d {datafile} --wlp {lp_file} --check"
 
-    subprocess.run(cmd, shell = True, capture_output = True)
+    if log_file:
+        cmd = f"glpsol -m {osemosys} -d {datafile} --wlp {lp_file} --check --log {log_file}"
+        subprocess.run(cmd, shell = True, capture_output = True)
+        
+    else:
+        cmd = f"glpsol -m {osemosys} -d {datafile} --wlp {lp_file} --check"
+        subprocess.run(cmd, shell = True, capture_output = True)
 
     if not os.path.exists(lp_file):
         logger.error(f"Can not create {lp_file}")
