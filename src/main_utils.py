@@ -522,26 +522,6 @@ def apply_option_data(original: pd.DataFrame, option: pd.DataFrame) -> pd.DataFr
 def get_new_capacity_lifetime(op_life: pd.DataFrame, new_capacity: pd.DataFrame) -> pd.DataFrame:
     """Gets new capacity to apply to next steps"""
     
-    def apply_op_life(start_year: int, technology: str, mapper: Dict[str,int]) -> List[int]:
-        """Creates a list of years to apply a capacity value to
-        
-        Args: 
-            start_year: int, 
-                start year of new capacity 
-            technology: str, 
-                technology to lookup operational life for
-            mapper: Dict[str,int]
-                technology to operational life mapper
-        Returns:
-            List[int]: 
-                Years that the capacity will be available for
-        """
-        try:
-            return list(range(int(start_year), int(mapper[technology]) + int(start_year), 1))
-        except KeyError:
-            return [int(start_year)] # op life of 1 year
-    
-    
     mapper = dict(zip(op_life['TECHNOLOGY'], op_life['VALUE']))
     regions = new_capacity["REGION"].unique()
     
@@ -556,8 +536,28 @@ def get_new_capacity_lifetime(op_life: pd.DataFrame, new_capacity: pd.DataFrame)
         results.append(df)
     
     df = pd.concat(results).reset_index(drop=True)
+    df = df.groupby(by=["REGION", "TECHNOLOGY", "YEAR"]).sum().reset_index()
     
     return df[["REGION", "TECHNOLOGY", "YEAR", "VALUE"]]
+
+def apply_op_life(start_year: int, technology: str, mapper: Dict[str,int]) -> List[int]:
+    """Creates a list of years to apply a capacity value to
+    
+    Args: 
+        start_year: int, 
+            start year of new capacity 
+        technology: str, 
+            technology to lookup operational life for
+        mapper: Dict[str,int]
+            technology to operational life mapper
+    Returns:
+        List[int]: 
+            Years that the capacity will be available for
+    """
+    try:
+        return list(range(int(start_year), int(mapper[technology]) + int(start_year), 1))
+    except KeyError:
+        return [int(start_year)] # op life of 1 year
 
 def merge_res_capacites(old_res_cap: pd.DataFrame, new_res_cap: pd.DataFrame) -> pd.DataFrame:
     """Merges an exisiting residual capacity and new residual capacity dataframe
@@ -586,7 +586,8 @@ def update_res_capacity(res_capacity: pd.DataFrame, op_life: pd.DataFrame, new_c
         step_years: List[int]
             Years in the step assocated with the NewCapacity
     """
+    step_new_capacity = new_capacity.loc[new_capacity["YEAR"].isin(step_years)]
+    new_res_cap = get_new_capacity_lifetime(op_life, step_new_capacity)
+    final_capacity = merge_res_capacites(res_capacity, new_res_cap)
     
-    new_capacity = new_capacity.loc[new_capacity["YEAR"].isin(step_years)]
-    new_res_cap = get_new_capacity_lifetime(op_life, new_capacity)
-    return merge_res_capacites(res_capacity, new_res_cap)
+    return final_capacity
