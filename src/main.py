@@ -580,7 +580,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     
                     # apply to max option level for the step 
                     option_dir_to_update = Path(data_dir, f"step_{next_step}")
-
+                    for each_option in option:
+                        option_dir_to_update = option_dir_to_update.joinpath(each_option)
+                    
                     for subdir in utils.get_subdirectories(str(option_dir_to_update)):
                         old_res_cap = pd.read_csv(str(Path(subdir, "ResidualCapacity.csv")))
                         res_cap = mu.update_res_capacity(
