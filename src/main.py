@@ -583,8 +583,19 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     for each_option in option:
                         option_dir_to_update = option_dir_to_update.joinpath(each_option)
                     
-                    for subdir in utils.get_subdirectories(str(option_dir_to_update)):
-                        old_res_cap = pd.read_csv(str(Path(subdir, "ResidualCapacity.csv")))
+                    if utils.check_for_subdirectory(str(option_dir_to_update)):
+                        for subdir in utils.get_subdirectories(str(option_dir_to_update)):
+                            old_res_cap = pd.read_csv(str(Path(subdir, "ResidualCapacity.csv")))
+                            res_cap = mu.update_res_capacity(
+                                res_capacity=old_res_cap,
+                                op_life=op_life,
+                                new_capacity=new_cap,
+                                step_years=actual_years_per_step[step]
+                            )
+                            res_cap = res_cap.loc[res_cap["YEAR"].isin(modelled_years_per_step[next_step])]
+                            res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
+                    else:
+                        old_res_cap = pd.read_csv(str(Path(option_dir_to_update, "ResidualCapacity.csv")))
                         res_cap = mu.update_res_capacity(
                             res_capacity=old_res_cap,
                             op_life=op_life,
@@ -592,7 +603,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                             step_years=actual_years_per_step[step]
                         )
                         res_cap = res_cap.loc[res_cap["YEAR"].isin(modelled_years_per_step[next_step])]
-                        res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
+                        res_cap.to_csv(str(Path(option_dir_to_update, "ResidualCapacity.csv")), index=False)
 
                     next_step += 1
         
