@@ -44,12 +44,16 @@ logger = logging.getLogger(__name__)
               help="Available solvers are 'glpk', 'cbc', and 'gurobi'. Default is 'cbc'")
 @click.option("--cores", default=1, show_default=True, 
               help="Number of cores snakemake is allowed to use.")
+@click.option("--foresight", default=None,
+              help="""Allows the user to indicated the number of years of foresight,
+                i.e., beyond the years in a step.
+                """)
 @click.option("--path_param", default=None, 
               help="""If the scenario data for the decisions between the steps is 
               saved elsewhere than '../data/scenarios/' on can use this option to 
               indicate the path.
               """)
-def main(input_data: str, step_length: int, path_param: str, cores: int, solver=None):
+def main(input_data: str, step_length: int, path_param: str, cores: int, solver=None, foresight=None):
     """Main entry point for workflow"""
 
     ##########################################################################
@@ -108,7 +112,10 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
 
     # get step length parameters 
     otoole_data, otoole_defaults = utils.read_csv(str(otoole_csv_dir), otoole_config)
-    actual_years_per_step, modelled_years_per_step, num_steps = ds.split_data(otoole_data, step_length)
+    if not foresight==None:
+        actual_years_per_step, modelled_years_per_step, num_steps = ds.split_data(otoole_data, step_length, foresight=foresight)
+    else:
+        actual_years_per_step, modelled_years_per_step, num_steps = ds.split_data(otoole_data, step_length)
 
     # write out original parsed step data 
     for step, years_per_step in modelled_years_per_step.items():

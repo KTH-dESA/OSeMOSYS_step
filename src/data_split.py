@@ -71,9 +71,42 @@ def get_step_data(data: Dict[str, pd.DataFrame], years: List[int]) -> Dict[str, 
             out[name] = df
             
     return out 
+
+# Function to calculate end of model
+def get_end_model(m_start: int, m_step_size: int, last_yr_model: int, m_foresight = None):
+    """Determines the last year of a step model
     
+    Args:
+        m_start: int
+            Start year of model
+        m_step_size: int
+            Length of current step
+        last_yr_model: int
+            Overall last year
+        m_foresight: int
+            Foresight horizon if indicated by user
+
+    Returns:
+        e_m: int
+            Last year of step model 
+    """
+    
+    if not m_foresight == None:
+        if not (m_start + m_step_size + int(m_foresight)) > last_yr_model:
+            e_m = m_start + m_step_size + int(m_foresight)
+        else:
+            e_m = last_yr_model
+
+    else:
+        if not (m_start + (m_step_size * 2)) > last_yr_model:
+            e_m = m_start + (m_step_size * 2)
+        else:
+            e_m = last_yr_model
+
+    return e_m
+
 # Function to run the script
-def split_data(data: Dict[str, pd.DataFrame], step_size: List[int]) -> Tuple[Dict[int, List[int]], Dict[int, List[int]], int]:
+def split_data(data: Dict[str, pd.DataFrame], step_size: List[int], foresight = None) -> Tuple[Dict[int, List[int]], Dict[int, List[int]], int]:
     """Reads in and splits data for steps 
     
     Args: 
@@ -83,6 +116,9 @@ def split_data(data: Dict[str, pd.DataFrame], step_size: List[int]) -> Tuple[Dic
             Years in each step. If one value provided, equal step sizes. If 
             multiple values provided, the first values represents the first 
             step, with the remaining step sizes being the second value
+        foresight: int or None
+            Optional arguemnt in case the user specifies the foresight 
+            horizon, i.e., the years beyond the actual step years.
     
     Returns:
         actual_years_per_step: Dict 
@@ -95,7 +131,8 @@ def split_data(data: Dict[str, pd.DataFrame], step_size: List[int]) -> Tuple[Dic
     """
     
     # Derive information on modelling period
-    m_years = data['YEAR']["VALUE"].to_list() # modeled years
+    m_years = data['YEAR']["VALUE"].to_list() # modelled years
+    l_year = max(m_years) # last year modelled 
     n_years = len(m_years) # number of years
 
     if len(step_size) < 2:
@@ -117,8 +154,15 @@ def split_data(data: Dict[str, pd.DataFrame], step_size: List[int]) -> Tuple[Dic
             start = m_years[0] + step_size[0] * step_num
             
             if step_num < full_steps:
-                end_model = start + (step_size[0] * 2)
+                
                 end_actual = start + step_size[0]
+
+                if foresight == None:
+                    end_model = get_end_model(start, step_size[0], l_year)
+
+                else:
+                    end_model = get_end_model(start, step_size[0], l_year, foresight)
+                
             else:
                 end_model = m_years[-1] + 1
                 end_actual = m_years[-1] + 1
@@ -134,23 +178,32 @@ def split_data(data: Dict[str, pd.DataFrame], step_size: List[int]) -> Tuple[Dic
             
             if step_num == 0: 
                 start = m_years[0]
-                end_model = start + step_size[0] * 2
                 end_actual = start + step_size[0]
+
+                if foresight == None:
+                    end_model = get_end_model(start, step_size[0], l_year)
+                else:
+                    end_model = get_end_model(start, step_size[0], l_year, foresight)
+
             elif step_num < full_steps:
                 start =  m_years[0] + step_size[0] + step_size[1] * (step_num - 1)
-                end_model = start + (step_size[1] * 2)
                 end_actual = start + step_size[1]
+                if foresight == None:
+                    end_model = get_end_model(start, step_size[1], l_year)
+                else:
+                    end_model = get_end_model(start, step_size[1], l_year, foresight)
+
             else:
                 start =  m_years[0] + step_size[0] + (step_num - 1) * step_size[1]
-                end_model = m_years[-1]
                 end_actual = m_years[-1]
+                end_model = m_years[-1]
                 
             step_years_model = [y for y in m_years if y in range(start, end_model)]
             step_years_actual = [y for y in m_years if y in range(start, end_actual)]
                 
             model_years_per_step[step_num] = step_years_model
             actual_years_per_step[step_num] = step_years_actual
-    
+
     # retun (all_steps-1) beacause indexing of steps starts at 0 
     return actual_years_per_step, model_years_per_step, (all_steps - 1)
 
