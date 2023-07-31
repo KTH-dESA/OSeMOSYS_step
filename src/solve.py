@@ -129,7 +129,28 @@ def check_glpk_feasibility(sol: str) -> int:
         return 0
     else:
         return 1
+
+def check_gurobi_feasibility(sol: str) -> int:
+    """Checks if the gurobi solution is optimal
     
+    This will check for an empty solution file, not the ilp file that 
+    Gurobi will also write out for infeasible 
+    
+    Args:
+        sol: str
+            Path to gurobi solution file 
+    
+    Returns:
+        0: int
+            If successful 
+        1: int
+            If not successful
+    """
+    if Path(sol).stat().st_size != 0: # not empty 
+        return 0
+    else:
+        return 1
+
 def get_nth_line(file_path: str, n: int):
     """Gets nth line from a textfile"""
     with open(file_path, 'r') as file:
