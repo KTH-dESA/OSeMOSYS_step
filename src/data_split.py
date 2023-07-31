@@ -95,13 +95,13 @@ def get_end_model(m_start: int, m_step_size: int, last_yr_model: int, m_foresigh
         if not (m_start + m_step_size + int(m_foresight)) > last_yr_model:
             e_m = m_start + m_step_size + int(m_foresight)
         else:
-            e_m = last_yr_model
+            e_m = last_yr_model + 1
 
     else:
         if not (m_start + (m_step_size * 2)) > last_yr_model:
             e_m = m_start + (m_step_size * 2)
         else:
-            e_m = last_yr_model
+            e_m = last_yr_model + 1
 
     return e_m
 
