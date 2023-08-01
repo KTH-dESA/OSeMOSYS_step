@@ -344,6 +344,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             elif solver == "glpk":
                 if solve.check_glpk_feasibility(str(sol_file)) == 1:
                     failed_sols.append(str(sol_file))
+            elif solver == "gurobi":
+                if solve.check_gurobi_feasibility(str(sol_file)) == 1:
+                    failed_sols.append(str(sol_file))
                     
         else:
             for option in options:
@@ -358,6 +361,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                         failed_sols.append(str(sol_file))
                 elif solver == "glpk":
                     if solve.check_glpk_feasibility(str(sol_file)) == 1:
+                        failed_sols.append(str(sol_file))
+                elif solver == "gurobi":
+                    if solve.check_gurobi_feasibility(str(sol_file)) == 1:
                         failed_sols.append(str(sol_file))
 
         ######################################################################
