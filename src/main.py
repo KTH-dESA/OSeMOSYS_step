@@ -143,6 +143,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     if not results_dir.exists():
         results_dir.mkdir()
     mu.create_option_directories(str(results_dir), step_options, step_directories=False)
+    if not utils.check_for_subdirectory(results_dir):
+        all_res_dir = Path(results_dir, 'the_scen')
+        all_res_dir.mkdir(exist_ok=True)
     
     # copy over step/scenario/option data
     mu.copy_reference_option_data(src_dir=data_dir, dst_dir=data_dir, options_per_step=step_options)
