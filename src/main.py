@@ -529,9 +529,13 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     break
                 
                 step_dir_to_update = Path(data_dir, f"step_{next_step}")
-                
-                for subdir in utils.get_subdirectories(str(step_dir_to_update)):
-                    step_res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
+
+                if not utils.check_for_subdirectory(str(step_dir_to_update)):
+                    step_res_cap.to_csv(str(Path(step_dir_to_update, "ResidualCapacity.csv")), index=False)
+
+                else:
+                    for subdir in utils.get_subdirectories(str(step_dir_to_update)):
+                        step_res_cap.to_csv(str(Path(subdir, "ResidualCapacity.csv")), index=False)
                  
                 next_step += 1
 
@@ -553,7 +557,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             # overwrite residual capacity values for all subsequent steps
             next_step = step + 1
             while next_step < num_steps + 1:
-                
+
                 # apply to max option level for the step 
                 option_dir_to_update = Path(data_dir, f"step_{next_step}")
 
