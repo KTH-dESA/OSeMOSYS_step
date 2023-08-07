@@ -18,6 +18,7 @@ import shutil
 from typing import Dict, List
 import utils
 import main_utils as mu
+import numpy as np
 import preprocess_data 
 import solve
 from tqdm import tqdm
@@ -509,7 +510,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             old_res_cap = pd.read_csv(str(Path(next_step_dir_data, "ResidualCapacity.csv")))
             op_life = pd.read_csv(str(Path(step_dir_data, "OperationalLife.csv")))
             new_cap = pd.read_csv(str(Path(step_dir_results, "NewCapacity.csv")))
-            new_cap["VALUE"] =  new_cap["VALUE"].round(1)
+            new_cap["VALUE"] =  new_cap["VALUE"] * 10
+            new_cap['VALUE'] = new_cap['VALUE'].apply(np.floor)
+            new_cap['VALUE'] = new_cap['VALUE'] / 10
             
             res_cap = mu.update_res_capacity(
                 res_capacity=old_res_cap,
@@ -552,7 +555,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             # Get updated residual capacity values 
             op_life = pd.read_csv(str(Path(option_dir_data, "OperationalLife.csv")))
             new_cap = pd.read_csv(str(Path(option_dir_results, "NewCapacity.csv")))
-            new_cap["VALUE"] =  new_cap["VALUE"].round(1)
+            new_cap["VALUE"] =  new_cap["VALUE"] * 10
+            new_cap['VALUE'] = new_cap['VALUE'].apply(np.floor)
+            new_cap['VALUE'] = new_cap['VALUE'] / 10
             
             # overwrite residual capacity values for all subsequent steps
             next_step = step + 1
@@ -595,7 +600,9 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
 
                 op_life = pd.read_csv(str(Path(option_dir_data, "OperationalLife.csv")))
                 new_cap = pd.read_csv(str(Path(option_dir_results, "NewCapacity.csv")))
-                new_cap["VALUE"] =  new_cap["VALUE"].round(1)
+                new_cap["VALUE"] =  new_cap["VALUE"] * 10
+                new_cap['VALUE'] = new_cap['VALUE'].apply(np.floor)
+                new_cap['VALUE'] = new_cap['VALUE'] / 10
                 
                 # overwrite residual capacity values for all subsequent steps
                 next_step = step + 1
