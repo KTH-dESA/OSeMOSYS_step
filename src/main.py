@@ -504,10 +504,10 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             logger.info(f"Step {step} does not have options, and step {step + 1} does not have options")
             
             # Get updated residual capacity values 
-            next_step_dir_data = Path(data_dir, f"step_{step + 1}")
             step_dir_results = Path(step_dir, f"step_{step}", "results")
             
-            old_res_cap = pd.read_csv(str(Path(next_step_dir_data, "ResidualCapacity.csv")))
+            old_res_cap = mu.get_res_cap_next_steps(step, num_steps, data_dir, actual_years_per_step)
+
             op_life = pd.read_csv(str(Path(step_dir_data, "OperationalLife.csv")))
             new_cap = pd.read_csv(str(Path(step_dir_results, "NewCapacity.csv")))
             new_cap["VALUE"] =  new_cap["VALUE"] * 10

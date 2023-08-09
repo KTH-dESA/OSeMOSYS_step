@@ -519,6 +519,35 @@ def apply_option_data(original: pd.DataFrame, option: pd.DataFrame) -> pd.DataFr
     df = df.drop_duplicates(keep="last", subset=subset).reset_index(drop=True)
     return df
 
+def get_res_cap_next_steps(step: int, n_steps: int, data_path: str, actual_yrs_in_steps: Dict) -> pd.DataFrame:
+    """Gets a dataframe of the ResidualCapacity in the steps that still need to be run.
+    
+    Args:
+        step: int
+            current step, that has just been run
+        n_steps: int
+            overall number of steps
+        data_path: str
+            Path to the directory that contains the directories with the step data
+        actual_yrs_in_steps: Dict
+            Dictionary with actual years for each step
+
+    Returns:
+        pd.DataFrame
+            One dataframe with the ResidualCapacity of all remaining steps
+    """
+    res_cap = pd.DataFrame(columns=['REGION', 'TECHNOLOGY', 'YEAR', 'VALUE'])
+
+    next_step = step + 1
+    while next_step < n_steps + 1:
+        res_cap_next_step = pd.read_csv(str(Path(data_path, f"step_{next_step}", "ResidualCapacity.csv")))
+        res_cap_next_step = res_cap_next_step[res_cap_next_step['YEAR'].isin(actual_yrs_in_steps[next_step])]
+        res_cap = pd.concat([res_cap, res_cap_next_step], ignore_index=True)
+        
+        next_step += 1
+        
+    return res_cap
+
 def get_new_capacity_lifetime(op_life: pd.DataFrame, new_capacity: pd.DataFrame) -> pd.DataFrame:
     """Gets new capacity to apply to next steps"""
     
