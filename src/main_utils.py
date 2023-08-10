@@ -540,7 +540,13 @@ def get_res_cap_next_steps(step: int, n_steps: int, data_path: str, actual_yrs_i
 
     next_step = step + 1
     while next_step < n_steps + 1:
-        res_cap_next_step = pd.read_csv(str(Path(data_path, f"step_{next_step}", "ResidualCapacity.csv")))
+        if not utils.check_for_subdirectory(str(Path(data_path, f"step_{next_step}"))):
+            res_cap_next_step = pd.read_csv(str(Path(data_path, f"step_{next_step}", "ResidualCapacity.csv")))
+
+        else:
+            sub_dir = utils.get_subdirectories(str(Path(data_path, f"step_{next_step}")))[0]
+            res_cap_next_step = pd.read_csv(str(Path(sub_dir, "ResidualCapacity.csv")))
+        
         res_cap_next_step = res_cap_next_step[res_cap_next_step['YEAR'].isin(actual_yrs_in_steps[next_step])]
         res_cap = pd.concat([res_cap, res_cap_next_step], ignore_index=True)
         
