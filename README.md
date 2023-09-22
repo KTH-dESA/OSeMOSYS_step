@@ -92,6 +92,8 @@ about allowing investment in coal.
 Drop in an osemsosys file (called `osemosys.txt`) into the `model/` directory
 
 ## 2. Add the base data file
+**NB:** Neither the model data nor the scenario data should make use of the parameter _TotalAnnualMaxCapacity_. It can cause problems when passing _NewCapacity_ from one step to the next step.
+
 Drop in a MathProg formatted data file in the `data/` folder. The data file 
 can be long formatted (otoole) or wide formatted (momani)
 
