@@ -219,6 +219,22 @@ OSeMOSYS_STEP
 └── steps
 ```
 
+# Installation
+
+You can use pip to install the package directly from Github:
+
+    pip install git+https://github.com/KTH-dESA/OSeMOSYS_step.git@main#egg=osemosys_step
+
+While in development phase, you can test this like so:
+
+    pip install --dry-run git+https://github.com/KTH-dESA/OSeMOSYS_step.git@packaging#egg=osemosys_step
+
+Or you install a development version like so:
+
+    git clone https://github.com/KTH-dESA/OSeMOSYS_step.git osemosys_step
+    cd osemosys_step
+    pip install -e .
+
 # Development
 
 OSeMOSYS_step is packaged using [hatchling](https://hatch.pypa.io/latest/)
