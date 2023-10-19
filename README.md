@@ -5,7 +5,7 @@ foresight with OSeMOSYS models.
 
 # Directory Structure
 
-Before the workflow has been ran, the directory will look like what is shown below:
+Before the workflow has been run, the directory will look like what is shown below:
 
 ```bash
 OSeMOSYS_STEP

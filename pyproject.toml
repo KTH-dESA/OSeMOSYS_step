@@ -37,6 +37,9 @@ Documentation = "https://github.com/KTH-dESA/OSeMOSYS_step/osemosys-step#readme"
 Issues = "https://github.com/KTH-dESA/OSeMOSYS_step/issues"
 Source = "https://github.com/KTH-dESA/OSeMOSYS_step"
 
+[project.scripts]
+step = "osemosys_step.main:main"
+
 [tool.hatch.version]
 source = "vcs"
 
