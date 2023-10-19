@@ -58,9 +58,11 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     """Main entry point for workflow"""
 
     ##########################################################################
-    # Setup dirctories
+    # Setup directories
     ##########################################################################
 
+    # Note that when running from the command line entry point, these paths will be relative
+    # to the local path from which the command is run.
     data_dir = Path("data")
     step_dir = Path("steps")
     results_dir = Path("results")

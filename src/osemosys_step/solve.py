@@ -6,9 +6,6 @@ import sys
 import logging
 import subprocess
 import os
-# from otoole import ReadCbc, ReadCplex, ReadGurobi, ReadDatafile, ReadCsv
-# from otoole import WriteCsv
-# from otoole import Context
 
 from otoole import convert_results
 
@@ -34,25 +31,6 @@ def generate_results(sol_file: str, solver: str, config: Dict[str,Any], data_fil
     """
 
     sol_dir = Path(sol_file).parent
-
-    # if solver == "gurobi":
-    #     reader = ReadGurobi(user_config = config)
-    # elif solver == "cplex":
-    #     reader = ReadCplex(user_config = config)
-    # elif solver == "cbc":
-    #     reader = ReadCbc(user_config = config)
-    # writer = WriteCsv(user_config = config)
-
-    # if data_file:
-    #     input_data, _ = ReadDatafile(user_config=config).read(data_file)
-    # elif csv_data:
-    #     input_data, _ = ReadCsv(user_config=config).read(csv_data)
-    # else:
-    #     input_data = None
-
-    # context = Context(read_strategy = reader, write_strategy = writer)
-
-    # context.convert(sol_file, str(Path(sol_dir, "results")), input_data = input_data)
 
     convert_results(config, solver, 'csv', sol_file, str(Path(sol_dir, "results")), 'datafile', data_file)
 
