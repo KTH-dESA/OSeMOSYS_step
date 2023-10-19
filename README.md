@@ -239,6 +239,10 @@ Or you install a development version like so:
 
 OSeMOSYS_step is packaged using [hatchling](https://hatch.pypa.io/latest/)
 
+Create the development environment:
+
+    hatch env create
+
 Run the tests:
 
     hatch run test

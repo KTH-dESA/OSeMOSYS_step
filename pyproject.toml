@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "osemosys-step"
+name = "osemosys_step"
 dynamic = ["version"]
 description = 'The OSeMOSYS_step package expands the capabilities of OSeMOSYS by allowing for model runs under myopia with limited foresight and scenario tree model runs that are performed under myopia with limited foresight while considering provided decision options.'
 readme = "README.md"
@@ -26,7 +26,10 @@ classifiers = [
 ]
 dependencies = [
   "pandas",
-  "otoole"
+  "otoole>=1.1",
+  "snakemake",
+  "click",
+  "tqdm"
   ]
 
 [project.urls]

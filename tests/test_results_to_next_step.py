@@ -1,7 +1,7 @@
 import pandas as pd
 from pytest import fixture, raises
 from pandas.testing import assert_frame_equal
-import main_utils as mu
+from osemosys_step import main_utils as mu
 
 @fixture
 def res_capacity():
@@ -15,7 +15,7 @@ def res_capacity():
         ], columns = ["REGION", "TECHNOLOGY", "YEAR", "VALUE"]
     )
 
-@fixture 
+@fixture
 def op_life():
     return pd.DataFrame(
         [
@@ -35,9 +35,9 @@ def new_capacity():
 class TestUpdateResidualCapacity:
 
     def test_update_residual_capacity_1(self, res_capacity, op_life, new_capacity):
-        
+
         step_years = [1995, 1996]
-        
+
         expected = pd.DataFrame(
             [
                 ["UTOPIA", "E01", 1995, 3],
@@ -48,17 +48,17 @@ class TestUpdateResidualCapacity:
             ], columns = ["REGION", "TECHNOLOGY", "YEAR", "VALUE"]
         )
         actual = mu.update_res_capacity(
-            res_capacity = res_capacity, 
-            op_life = op_life, 
-            new_capacity = new_capacity, 
+            res_capacity = res_capacity,
+            op_life = op_life,
+            new_capacity = new_capacity,
             step_years = step_years
         )
         assert_frame_equal(actual, expected)
-        
+
     def test_update_residual_capacity_2(self, res_capacity, op_life, new_capacity):
-        
+
         step_years = [1995, 1996, 1997]
-        
+
         expected = pd.DataFrame(
             [
                 ["UTOPIA", "E01", 1995, 3],
@@ -71,17 +71,17 @@ class TestUpdateResidualCapacity:
             ], columns = ["REGION", "TECHNOLOGY", "YEAR", "VALUE"]
         )
         actual = mu.update_res_capacity(
-            res_capacity = res_capacity, 
-            op_life = op_life, 
-            new_capacity = new_capacity, 
+            res_capacity = res_capacity,
+            op_life = op_life,
+            new_capacity = new_capacity,
             step_years = step_years
         )
         assert_frame_equal(actual, expected)
-        
+
 class TestGetNewCapacityLifetime:
-    
+
     def test_get_new_capacity_lifetime(self, op_life, new_capacity):
-        
+
         expected = pd.DataFrame(
             [
                 ["UTOPIA", "E01", 1995, 1],
@@ -95,24 +95,23 @@ class TestGetNewCapacityLifetime:
         )
         actual = mu.get_new_capacity_lifetime(op_life=op_life, new_capacity=new_capacity)
         assert_frame_equal(actual, expected)
-        
+
 class TestApplyOperationalLife:
-        
+
     def test_apply_op_life_one_year(self):
         start_year = 2000
         technology = "EO1"
         mapper = {"EO1": 1}
-        
+
         actual = mu.apply_op_life(start_year, technology, mapper)
         expected = [2000]
         assert actual == expected
-        
+
     def test_apply_op_life_multiple_years(self):
         start_year = 2000
         technology = "EO1"
         mapper = {"EO1": 5}
-        
+
         actual = mu.apply_op_life(start_year, technology, mapper)
         expected = [2000, 2001, 2002, 2003, 2004]
         assert actual == expected
-        
