@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-import results_to_next_step as rtns
+from osemosys_step import results_to_next_step as rtns
 
 class TestResultsTransfer:
 
@@ -11,7 +11,7 @@ class TestResultsTransfer:
         res_path = os.path.join(folder, 'results')
 
         res_cap = pd.read_csv(os.path.join(dp_path, 'ResidualCapacity.csv'))
-        
+
         data = [
             ['TEST','TECA',0,1.5],
             ['TEST','TECB',0,1],

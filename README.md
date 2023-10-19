@@ -227,6 +227,10 @@ Run the tests:
 
     hatch run test
 
+Run linting for style, typing and format:
+
+     hatch run lint:al
+
 The version number is taken from the git tag.  Before building and publishing the package, you should create a new annotated tag.
 
 First, check the previous tags:
