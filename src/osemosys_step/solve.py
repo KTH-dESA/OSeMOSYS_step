@@ -58,7 +58,7 @@ def create_lp(datafile: str, lp_file: str, osemosys: str, log_file:str = None) -
         subprocess.run(cmd, shell = True, capture_output = True)
 
     if not os.path.exists(lp_file):
-        logger.error(f"Can not create {lp_file}")
+        logger.error(f"Can not create {lp_file} with the command {cmd}")
         return 1
     else:
         return 0

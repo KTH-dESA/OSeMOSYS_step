@@ -15,19 +15,17 @@ import os
 from pathlib import Path
 import pandas as pd
 import shutil
-from typing import Dict, List
 from . import utils
 from . import main_utils as mu
-import numpy as np
 from . import preprocess_data
 from . import solve
 from tqdm import tqdm
-import subprocess
-import yaml
 import logging
 import sys
 import glob
+import snakemake 
 
+from otoole import read, write
 
 logger = logging.getLogger(__name__)
 
@@ -110,11 +108,10 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     # Create folder of csvs from datafile
     otoole_csv_dir = Path(data_dir, "data")
     otoole_config_path = Path(data_dir, "otoole_config.yaml")
-    otoole_config = utils.read_otoole_config(str(otoole_config_path))
-    utils.datafile_to_csv(str(input_data), str(otoole_csv_dir), otoole_config)
+    utils.datafile_to_csv(str(input_data), str(otoole_csv_dir), otoole_config_path)
 
     # get step length parameters
-    otoole_data, otoole_defaults = utils.read_csv(str(otoole_csv_dir), otoole_config)
+    otoole_data, otoole_defaults = read(otoole_config_path, "csv", str(otoole_csv_dir))
     if not foresight==None:
         actual_years_per_step, modelled_years_per_step, num_steps = ds.split_data(otoole_data, step_length, foresight=foresight)
     else:
@@ -123,7 +120,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
     # write out original parsed step data
     for step, years_per_step in modelled_years_per_step.items():
         step_data = ds.get_step_data(otoole_data, years_per_step)
-        utils.write_csv(step_data, otoole_defaults, str(Path(data_dir, f"data_{step}")), otoole_config)
+        write(otoole_config_path, "csv", str(Path(data_dir, f"data_{step}")), step_data, otoole_defaults)
         logger.info(f"Wrote data for step {step}")
 
     # dictionary for steps with new scenarios
@@ -205,7 +202,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             csvs = Path(data_dir, f"step_{step}")
             data_file = Path(step_dir, f"step_{step}", "data.txt")
             data_file_pp = Path(step_dir, f"step_{step}", "data_pp.txt")
-            mu.create_datafile(csvs, data_file, otoole_config)
+            mu.create_datafile(csvs, data_file, otoole_config_path)
             preprocess_data.main("otoole", str(data_file), str(data_file_pp))
         else:
             for option in options:
@@ -220,7 +217,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 else:
                     data_file_pp = data_file.joinpath("data_pp.txt") # preprocessed
                     data_file = data_file.joinpath("data.txt") # need non-preprocessed for otoole results
-                    mu.create_datafile(csvs, data_file, otoole_config)
+                    mu.create_datafile(csvs, data_file, otoole_config_path)
                     preprocess_data.main("otoole", str(data_file), str(data_file_pp))
 
         ######################################################################
@@ -239,7 +236,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
 
             exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file), str(lp_log_file))
             if exit_code == 1:
-                logger.warning(f"{str(lp_file)} could not be created")
+                logger.error(f"{str(lp_file)} could not be created")
                 failed_lps.append(lp_file)
         else:
             for option in options:
@@ -257,7 +254,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 lp_log_file = Path(lp_log_dir,"lp.log")
                 exit_code = solve.create_lp(str(datafile), str(lp_file), str(osemosys_file), str(lp_log_file))
                 if exit_code == 1:
-                    logger.warning(f"{str(lp_file)} could not be created")
+                    logger.error(f"{str(lp_file)} could not be created")
                     failed_lps.append(lp_file)
 
         ######################################################################
@@ -280,7 +277,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             if result_option_path == results_dir:
                 logger.error("Top level run failed :(")
                 for item in result_option_path.glob('*'):
-                    if not item == ".gitignore":
+                    if not item.name == ".gitkeep":
                         shutil.rmtree(item)
                 sys.exit()
             elif result_option_path.exists():
@@ -295,7 +292,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         lps_to_solve = []
 
         if not options:
-            lp_file = Path(step_dir, f"step_{step}", "model.lp")
+            lp_file = Path("..", "..", step_dir, f"step_{step}", "model.lp")
             sol_dir = Path(step_dir, f"step_{step}")
             lps_to_solve.append(str(lp_file))
         else:
@@ -308,21 +305,6 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 if lp_file.exists():
                     lps_to_solve.append(str(lp_file))
 
-        # create a config file for snakemake
-
-        config_path = Path(data_dir, "config.yaml")
-        config_data = {"files":lps_to_solve}
-        if not solver:
-            config_data["solver"] = "cbc"
-        else:
-            config_data["solver"] = solver
-
-        if config_path.exists():
-            config_path.unlink()
-
-        with open(str(config_path), 'w') as file:
-            yaml.dump(config_data, file)
-
         # run snakemake
 
         #######
@@ -331,8 +313,12 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         # when the goal is to just parallize multiple function calls
         #######
 
-        cmd = f"snakemake --cores {cores} --keep-going"
-        subprocess.run(cmd, shell = True, capture_output = True)
+        snakemake.snakemake(
+            "src/osemosys_step/snakefile", 
+            config = {"solver":solver, "files":lps_to_solve},
+            cores = cores,
+            keepgoing=True
+        )
 
         ######################################################################
         # Check for solutions
@@ -353,6 +339,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             elif solver == "gurobi":
                 if solve.check_gurobi_feasibility(str(sol_file)) == 1:
                     failed_sols.append(str(sol_file))
+            elif solver == "cplex":
+                print("CPLEX solution not checked")
 
         else:
             for option in options:
@@ -371,6 +359,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 elif solver == "gurobi":
                     if solve.check_gurobi_feasibility(str(sol_file)) == 1:
                         failed_sols.append(str(sol_file))
+                elif solver == "cplex":
+                    print("CPLEX solution not checked")
 
         ######################################################################
         # Remove failed solves
@@ -387,8 +377,8 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                 # remove options from results
                 result_option_path = Path(results_dir).joinpath(*failed_options)
                 if result_option_path == results_dir:
-                    logger.error("All runs failed")
-                    sys.exit("All runs failed :(")
+                    logger.error("All runs failed, quitting...")
+                    sys.exit()
                 elif result_option_path.exists():
                     shutil.rmtree(str(result_option_path))
 
@@ -412,7 +402,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     solve.generate_results(
                         sol_file=str(sol_file),
                         solver=solver,
-                        config=otoole_config,
+                        config=otoole_config_path,
                         data_file=str(data_file)
                     )
             else:
@@ -426,7 +416,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                         solve.generate_results(
                             sol_file=str(sol_file),
                             solver=solver,
-                            config=otoole_config,
+                            config=otoole_config_path,
                             data_file=str(data_file)
                         )
 

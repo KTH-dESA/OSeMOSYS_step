@@ -1,31 +1,32 @@
 
-configfile: "../data/config.yaml"
-
-options = [x[9:-9] for x in config["files"]] # extract out only the option path
+options = [x[12:-9] for x in config["files"]] # extract out only the option path
 
 rule all:
     input: 
-        expand("../steps/{option}/model.sol", option=options)
+        expand("steps/{option}/model.sol", option=options)
     
 rule solve_lp:
     message:
         'Solving model via {config[solver]}...'
     input:
-        lp_file = "../steps/{option}/model.lp"
+        lp_file = "steps/{option}/model.lp"
     output:
-        sol_file = "../steps/{option}/model.sol"
+        sol_file = "steps/{option}/model.sol"
     params:
-        ilp = "../steps/{option}/model.ilp"
+        ilp = "steps/{option}/model.ilp"
     log:
-        log = "../logs/solves/{option}/model.log"
+        log = "logs/solves/{option}/model.log"
     shell: 
         """
         if [ {config[solver]} = gurobi ]
         then
-          gurobi_cl Method=2 ResultFile={output.sol_file} ResultFile={params.ilp} {input.lp_file}
+            gurobi_cl Method=2 ResultFile={output.sol_file} ResultFile={params.ilp} {input.lp_file}
         elif [ {config[solver]} = cbc ]
         then
-          cbc {input.lp_file} solve -solu {output.sol_file}
+            cbc {input.lp_file} solve -solu {output.sol_file}
+        elif [ {config[solver]} = cplex ]
+        then 
+            cplex -c "read {input.lp_file}" "optimize" "write {output.sol_file}"
         elif [ {config[solver]} = glpk ]
         then
             cp ../model/osemosys.txt ../steps/{wildcards.option}/osemosys.txt &&
@@ -34,22 +35,3 @@ rule solve_lp:
             glpsol -m osemosys.txt -d data_pp.txt -w model.sol
         fi > {log.log}
         """
-
-"""
-Commented out cause you will need the transform script and sort results for CPLEX
-
-
-if [ {config[solver]} = gurobi ]
-then
-    gurobi_cl Method=2 ResultFile={output.sol_file} ResultFile={params.ilp} {input.lp_file}
-elif [ {config[solver]} = cplex ]
-then
-    cplex -c "read {input.lp_file}" "optimize" "write {output.sol_file}"
-else
-    cbc {input.lp_file} solve -sec 1500 -solu {output.sol_file}
-fi
-
-to add in glpk as the solver, we will either need to change the results path 
-(which is quite cumbersum) or just change the working directory (pro safer)
-
-"""

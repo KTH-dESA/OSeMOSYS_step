@@ -7,7 +7,6 @@ from typing import Dict, Any, List, Union, Tuple
 from yaml import load
 import pandas as pd
 import sys
-import glob
 from otoole.utils import UniqueKeyLoader
 from otoole import convert
 
@@ -134,7 +133,7 @@ def get_options_from_path(file_path: str, extension: str = None) -> Union[List[s
             return dirs[num + 1:]
     return None
 
-def datafile_to_csv(datafile: str, csv_dir: str, config: Dict[str,Any]) -> None:
+def datafile_to_csv(datafile: str, csv_dir: str, config: str) -> None:
     """Converts datafile to folder of csvs
 
     Args:
@@ -146,19 +145,3 @@ def datafile_to_csv(datafile: str, csv_dir: str, config: Dict[str,Any]) -> None:
             otoole configuration data
     """
     convert(config, 'datafile', 'csv', datafile, csv_dir)
-
-def read_csv(csv_dir: str, config: Dict[str, Any]) -> Tuple[Dict[str, pd.DataFrame], Dict[str, Any]]:
-    """Reads in csv data using otoole
-
-    Returns:
-        Tuple[Dict[str, pd.DataFrame], Dict[str, Any]]
-            First dictionary is the data
-            Second dictionary is the default values
-    """
-    reader = ReadCsv(user_config=config)
-    return reader.read(filepath=csv_dir)
-
-def write_csv(data: Dict[str, pd.DataFrame], default_values: Dict[str, Any], csv_dir:str, config: Dict[str,Any]) -> None:
-    """Writes out CSV data"""
-    writer = WriteCsv(user_config=config)
-    writer.write(inputs=data, filepath=csv_dir, default_values=default_values)
