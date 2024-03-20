@@ -230,7 +230,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
         if not options:
             lp_file = Path(step_dir, f"step_{step}", "model.lp")
             datafile = Path(step_dir, f"step_{step}", "data_pp.txt")
-            lp_log_dir = Path("..", "logs", "solves", f"step_{step}")
+            lp_log_dir = Path("logs", "solves", f"step_{step}")
             lp_log_dir.mkdir(parents=True, exist_ok=True)
             lp_log_file = Path(lp_log_dir,"lp.log")
 
@@ -242,7 +242,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
             for option in options:
                 lp_file = Path(step_dir, f"step_{step}")
                 datafile = Path(step_dir, f"step_{step}")
-                lp_log_dir = Path("..", "logs", "solves", f"step_{step}")
+                lp_log_dir = Path("logs", "solves", f"step_{step}")
                 lp_log_file = Path(lp_log_dir,"lp.log")
                 for each_option in option:
                     lp_file = lp_file.joinpath(each_option)
@@ -303,6 +303,7 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
                     lp_file = lp_file.joinpath(each_option)
                 lp_file = lp_file.joinpath("model.lp")
                 if lp_file.exists():
+                    lp_file = Path("..", "..", lp_file)
                     lps_to_solve.append(str(lp_file))
 
         # run snakemake
