@@ -159,8 +159,8 @@ omit = [
 ]
 
 [tool.coverage.paths]
-osemosys_step = ["src/osemosys_step", "*/osemosys-step/src/osemosys_step"]
-tests = ["tests", "*/osemosys-step/tests"]
+osemosys_step = ["src/osemosys_step", "*/osemosys_step/src/osemosys_step"]
+tests = ["tests", "*/osemosys_step/tests"]
 
 [tool.coverage.report]
 exclude_lines = [
