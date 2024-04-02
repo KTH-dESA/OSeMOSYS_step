@@ -249,7 +249,7 @@ Run the tests:
 
 Run linting for style, typing and format:
 
-     hatch run lint:al
+    hatch fmt
 
 The version number is taken from the git tag.  Before building and publishing the package, you should create a new annotated tag.
 
