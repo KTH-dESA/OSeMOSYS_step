@@ -3,42 +3,12 @@
 import sys
 import pandas as pd
 import math
-# from otoole import ReadDatafile, ReadCsv
-# from otoole import WriteCsv
-# from otoole import Context
 from typing import Dict, Tuple, List, Any
 from pathlib import Path
 from . import utils
 import logging
 
 logger = logging.getLogger(__name__)
-
-# def datafile_to_csv(datafile: str, csv_dir: str, config: Dict[str,Any]) -> None:
-#     """Converts datafile to folder of csvs
-
-#     Args:
-#         datafile: str
-#             Path to datafile
-#         csv_dir: str
-#             Path to directory of csv folder
-#         config: Dict[str,Any]
-#             otoole configuration data
-#     """
-#     reader = ReadDatafile(user_config=config)
-#     writer = WriteCsv(user_config=config)
-#     converter = Context(read_strategy=reader, write_strategy=writer)
-#     converter.convert(datafile, csv_dir)
-
-# def read_csv(csv_dir: str, config: Dict[str,Any], data: bool = True) -> Tuple[Dict[str, pd.DataFrame], Dict[str, Any]]:
-#     """Reads in csv data using otoole
-
-#     Returns:
-#         Tuple[Dict[str, pd.DataFrame], Dict[str, Any]]
-#             First dictionary is the data
-#             Second dictionary is the default values
-#     """
-#     reader = ReadCsv(user_config=config)
-#     return reader.read(filepath=csv_dir)
 
 def get_step_data(data: Dict[str, pd.DataFrame], years: List[int]) -> Dict[str, pd.DataFrame]:
     """Filter otoole data based on years
