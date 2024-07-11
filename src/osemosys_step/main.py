@@ -29,7 +29,11 @@ from otoole import read, write
 
 logger = logging.getLogger(__name__)
 
-@click.command()
+@click.group()
+def cli():
+    pass
+
+@cli.command("run")
 @click.option("--step_length", required=True, multiple=True,
               help="""
               Provide an integer to indicate the step length, e.g. '5' for
@@ -621,5 +625,26 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
 
                     next_step += 1
 
+@cli.command("create")
+@click.option("--path", required=True, default= '.',
+    help="Path where the directory structure shall be created."
+)
+def create_directory_structure(path: str):
+    """Function to create directory structure in which OSeMOSYS_step can be run.
+    The created directory has the below structure:
+    ```bash
+    OSeMOSYS_step
+    ├── data
+    │   ├── scenarios
+    ├── model
+    ├── results
+    └── steps
+    ```
+    """
+    dirs = ['data', ['data', 'scenarios'], 'model', 'results', 'steps']
+    for d in dirs:
+        p = Path(path, d)
+        p.mkdir()
+
 if __name__ == '__main__':
-    main() #input_data,step_length,path_param,solver)
+    cli() #input_data,step_length,path_param,solver)
