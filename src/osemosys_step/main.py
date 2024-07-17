@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 def cli():
     pass
 
-@cli.command("run")
+@click.command()
 @click.option("--step_length", required=True, multiple=True,
               help="""
               Provide an integer to indicate the step length, e.g. '5' for
@@ -56,7 +56,7 @@ def cli():
               saved elsewhere than '../data/scenarios/' on can use this option to
               indicate the path.
               """)
-def main(input_data: str, step_length: int, path_param: str, cores: int, solver=None, foresight=None):
+def run(input_data: str, step_length: int, path_param: str, cores: int, solver=None, foresight=None):
     """Main entry point for workflow"""
 
     ##########################################################################
@@ -625,11 +625,11 @@ def main(input_data: str, step_length: int, path_param: str, cores: int, solver=
 
                     next_step += 1
 
-@cli.command("create")
+@click.command()
 @click.option("--path", required=True, default= '.',
     help="Path where the directory structure shall be created."
 )
-def create_directory_structure(path: str):
+def setup(path: str):
     """Function to create directory structure in which OSeMOSYS_step can be run.
     The created directory has the below structure:
     ```bash
@@ -646,5 +646,8 @@ def create_directory_structure(path: str):
         p = Path(path, d)
         p.mkdir()
 
+cli.add_command(run)
+cli.add_command(setup)
+
 if __name__ == '__main__':
-    cli() #input_data,step_length,path_param,solver)
+    cli()

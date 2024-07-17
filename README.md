@@ -171,8 +171,7 @@ in importing coal, importing RL1, and if RLu is allowed to run or not. Add the f
 
 ## 4. Run the workflow
 ```bash
-cd src
-python main_ms.py --step_length 5 --input_data ../data/<datafile_name>.txt
+step run --step_length 5 --input_data ../data/<datafile_name>.txt
 ```
 
 ## 6. View Results

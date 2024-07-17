@@ -38,7 +38,7 @@ Issues = "https://github.com/KTH-dESA/OSeMOSYS_step/issues"
 Source = "https://github.com/KTH-dESA/OSeMOSYS_step"
 
 [project.scripts]
-step = "osemosys_step.main:main"
+step = "osemosys_step.main:cli"
 
 [tool.hatch.version]
 source = "vcs"
