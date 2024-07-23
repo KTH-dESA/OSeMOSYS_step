@@ -643,7 +643,7 @@ def setup(path: str):
     ```
     """
 
-    dirs = ['data', ['data', 'scenarios'], 'model', 'results', 'steps']
+    dirs = ['data', ['data', 'scenarios'], 'logs', 'model', 'results', 'steps']
 
     for d in dirs:
         if type(d) == list:
