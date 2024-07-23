@@ -20,6 +20,7 @@ from . import main_utils as mu
 from . import preprocess_data
 from . import solve
 from tqdm import tqdm
+from typing import List
 import logging
 import sys
 import glob
@@ -641,10 +642,16 @@ def setup(path: str):
     └── steps
     ```
     """
+
     dirs = ['data', ['data', 'scenarios'], 'model', 'results', 'steps']
+
     for d in dirs:
-        p = Path(path, d)
-        p.mkdir()
+        if type(d) == list:
+            p = Path(path, *d)
+        else:
+            p = Path(path, d)
+        if not p.exists():
+            p.mkdir()
 
 cli.add_command(run)
 cli.add_command(setup)
