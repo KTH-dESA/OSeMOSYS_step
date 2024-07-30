@@ -10,25 +10,29 @@ be indicate in the following way 'solver=gurobi'
 """
 
 import click
-from . import data_split as ds
+from osemosys_step import data_split as ds
+from osemosys_step import main_utils as mu
+from osemosys_step import (
+    utils,
+    preprocess_data,
+    solve
+)
 import os
 from pathlib import Path
 import pandas as pd
 import shutil
-from . import utils
-from . import main_utils as mu
-from . import preprocess_data
-from . import solve
 from tqdm import tqdm
-from typing import List
 import logging
 import sys
 import glob
-import snakemake 
 
 from otoole import read, write
 
 logger = logging.getLogger(__name__)
+
+from snakemake.cli import parse_args, args_to_api
+from snakemake.utils import min_version
+min_version("8.0")
 
 @click.group()
 def cli():
@@ -319,13 +323,17 @@ def run(input_data: str, step_length: int, path_param: str, cores: int, solver=N
         # when the goal is to just parallize multiple function calls
         #######
 
-        snakemake.snakemake(
-            "src/osemosys_step/snakefile", 
-            config = {"solver":solver, "files":lps_to_solve},
-            cores = cores,
-            keepgoing=True
-        )
-
+        # pretty sure there is a way to directly use the SnakemakeApi class! 
+        snakefile_args = [
+            "--snakefile src/osemosys_step/snakefile", 
+            f"--config solver={solver} files={lps_to_solve}",
+            f"--cores {cores}",
+            "--keep-going",
+            "--quiet"
+        ]
+        parser, args = parse_args(" ".join(snakefile_args))
+        _ = args_to_api(args, parser) # returns True for success
+        
         ######################################################################
         # Check for solutions
         ######################################################################
