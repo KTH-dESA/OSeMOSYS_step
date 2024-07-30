@@ -30,7 +30,7 @@ dependencies = [
   "snakemake",
   "click",
   "tqdm",
-  "glpk
+  "glpk"
   ]
 
 [project.urls]
