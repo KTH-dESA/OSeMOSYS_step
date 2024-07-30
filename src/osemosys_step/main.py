@@ -30,9 +30,9 @@ from otoole import read, write
 
 logger = logging.getLogger(__name__)
 
-from snakemake.cli import parse_args, args_to_api
 from snakemake.utils import min_version
 min_version("8.0")
+from snakemake.cli import parse_args, args_to_api
 
 @click.group()
 def cli():
