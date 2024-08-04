@@ -25,6 +25,7 @@ from tqdm import tqdm
 import logging
 import sys
 import glob
+import subprocess
 
 from otoole import read, write
 
@@ -32,7 +33,6 @@ logger = logging.getLogger(__name__)
 
 from snakemake.utils import min_version
 min_version("8.0")
-from snakemake.cli import parse_args, args_to_api
 
 @click.group()
 def cli():
@@ -326,13 +326,12 @@ def run(input_data: str, step_length: int, path_param: str, cores: int, solver=N
         # pretty sure there is a way to directly use the SnakemakeApi class! 
         snakefile_args = [
             "--snakefile src/osemosys_step/snakefile", 
-            f"--config solver={solver} files={lps_to_solve}",
+            f"--config solver={solver} files={[','.join(lps_to_solve)]}",
             f"--cores {cores}",
             "--keep-going",
             "--quiet"
         ]
-        parser, args = parse_args(" ".join(snakefile_args))
-        _ = args_to_api(args, parser) # returns True for success
+        subprocess.run(f"snakemake {' '.join(snakefile_args)}", shell = True)
         
         ######################################################################
         # Check for solutions

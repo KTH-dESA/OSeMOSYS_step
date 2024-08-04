@@ -1,5 +1,8 @@
 
-options = [x[12:-9] for x in config["files"]] # extract out only the option path
+if isinstance(config["files"], str):
+    options = [config["files"][12:-9]]
+else:
+    options = [x[12:-9] for x in config["files"]] # extract out only the option path
 
 rule all:
     input: 
