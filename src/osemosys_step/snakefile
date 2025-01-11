@@ -16,25 +16,36 @@ rule solve_lp:
     output:
         sol_file = "steps/{option}/model.sol"
     params:
-        ilp = "steps/{option}/model.ilp"
+        ilp = "steps/{option}/model.ilp",
     log:
-        log = "logs/solves/{option}/model.log"
+        log = "logs/solves/{option}/model.log",
+        solve_time = "logs/solves/{option}/solve_time.log"
     shell: 
         """
+        start_time=$(date +%s%3N)
+
         if [ {config[solver]} = gurobi ]
         then
             gurobi_cl Method=2 ResultFile={output.sol_file} ResultFile={params.ilp} {input.lp_file}
+            end_time=$(date +%s%3N)
         elif [ {config[solver]} = cbc ]
         then
             cbc {input.lp_file} solve -solu {output.sol_file}
+            end_time=$(date +%s%3N)
         elif [ {config[solver]} = cplex ]
         then 
             cplex -c "read {input.lp_file}" "optimize" "write {output.sol_file}"
+            end_time=$(date +%s%3N)
         elif [ {config[solver]} = glpk ]
         then
             cp ../model/osemosys.txt ../steps/{wildcards.option}/osemosys.txt &&
             cd ../steps/{wildcards.option} &&
             mkdir results &&
             glpsol -m osemosys.txt -d data_pp.txt -w model.sol
+            end_time=$(date +%s%3N)
         fi > {log.log}
+
+        solve_time=$(awk "BEGIN {{print ($end_time - $start_time) / 1000}}")
+
+        printf "Solve Time: %.3f seconds" "$solve_time" > {log.solve_time}
         """
