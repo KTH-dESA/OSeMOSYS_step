@@ -11,7 +11,9 @@ requires-python = ">=3.7"
 license = "MIT"
 keywords = []
 authors = [
-  { name = "Hauke Henke", email = "haukeh@kth.se" },
+  { name = "Hauke Henke", email = "hkhnk@ens.dk" },
+  { name = "Trevor Barnes", email = "trevor_barnes@sfu.ca"},
+  { name = "Will Usher", email = "wusher@kth.se"},
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
