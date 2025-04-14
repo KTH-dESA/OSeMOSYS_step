@@ -29,8 +29,7 @@ dependencies = [
   "otoole>=1.1",
   "snakemake",
   "click",
-  "tqdm",
-  "glpk"
+  "tqdm"
   ]
 
 [project.urls]
