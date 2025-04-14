@@ -65,6 +65,19 @@ def run(input_data: str, step_length: int, path_param: str, cores: int, solver=N
     """Main entry point for workflow"""
 
     ##########################################################################
+    # Check for needed software
+    ##########################################################################
+
+    # GLPK is needed for the generation of lp file. Hence, it is always needed for running OSeMOSYS_step.
+    try:
+        cmd = f"glpsol --help"
+        subprocess.run(cmd, shell = True)
+    except:
+        logger.error(f"Can't call GLPK. Make sure GLPK is installed on your computer.")
+        print("Can't call GLPK. Make sure GLPK is installed on your computer.")
+        sys.exit()
+
+    ##########################################################################
     # Setup directories
     ##########################################################################
 
