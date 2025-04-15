@@ -47,15 +47,16 @@ in the model run, there will be 5 subdirectories, each labeled 0 through 4.
 
 Within each `data/scenarios/#` subdirectory, CSV files hold information
 on the options that can be made. Each CSV file must follow the formatting
-shown below.
+shown below. 
+NB: `-1` indicates to the model that there is no limit.
 
 |             PARAMETER            | REGION | TECHNOLOGY | OPTION | YEAR | VALUE     |
 |:--------------------------------:|:------:|------------|--------|:----:|-----------|
-| TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 0      | 2020 | 999999999 |
-| TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 0      | 2021 | 999999999 |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 0      | 2020 | -1        |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 0      | 2021 | -1        |
 | ...                              | ...    | ...        | ...    | ...  | ...       |
-| TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 0      | 2049 | 999999999 |
-| TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 0      | 2050 | 999999999 |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 0      | 2049 | -1        |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 0      | 2050 | -1        |
 | TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 1      | 2020 | 0         |
 | TotalAnnualMaxCapacityInvestment | UTOPIA | COAL       | 1      | 2021 | 0         |
 | ...                              | ...    | ...        | ...    | ...  | ...       |
@@ -100,15 +101,16 @@ can be long formatted (otoole) or wide formatted (momani)
 
 ## 3. Add in scenario data
 For the first step, add the file `data/scenarios/1/A.csv`, where one
-option allows investment in IMPHCO, and one options does not allow it.
+option allows investment in IMPHCO, and one options does not allow it. 
+NB: `-1` indicates to the model that there is no limit.
 
 |             PARAMETER            | REGION | TECHNOLOGY | OPTION | YEAR | VALUE     |
 |:--------------------------------:|:------:|------------|--------|:----:|-----------|
-| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 0      | 1990 | 999999999 |
-| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 0      | 1991 | 999999999 |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 0      | 1990 | -1        |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 0      | 1991 | -1        |
 | ...                              | ...    | ...        | ...    | ...  | ...       |
-| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 0      | 2009 | 999999999 |
-| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 0      | 2010 | 999999999 |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 0      | 2009 | -1        |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 0      | 2010 | -1        |
 | TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 1      | 1990 | 0         |
 | TotalAnnualMaxCapacityInvestment | UTOPIA | IMPHCO1    | 1      | 1991 | 0         |
 | ...                              | ...    | ...        | ...    | ...  | ...       |
@@ -121,11 +123,11 @@ want to also add the option to invest in importing uranium. Add the file
 
 |             PARAMETER            | REGION | TECHNOLOGY | OPTION | YEAR | VALUE     |
 |:--------------------------------:|:------:|------------|--------|:----:|-----------|
-| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPURN1    | 0      | 1990 | 999999999 |
-| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPURN1    | 0      | 1991 | 999999999 |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPURN1    | 0      | 1990 | -1        |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPURN1    | 0      | 1991 | -1        |
 | ...                              | ...    | ...        | ...    | ...  | ...       |
-| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPURN1    | 0      | 2009 | 999999999 |
-| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPURN1    | 0      | 2010 | 999999999 |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPURN1    | 0      | 2009 | -1        |
+| TotalAnnualMaxCapacityInvestment | UTOPIA | IMPURN1    | 0      | 2010 | -1        |
 | TotalAnnualMaxCapacityInvestment | UTOPIA | IMPURN1    | 1      | 1990 | 0         |
 | TotalAnnualMaxCapacityInvestment | UTOPIA | IMPURN1    | 1      | 1991 | 0         |
 | ...                              | ...    | ...        | ...    | ...  | ...       |
@@ -138,31 +140,31 @@ in importing coal, importing RL1, and if RLu is allowed to run or not. Add the f
 
 |             PARAMETER                   | REGION | TECHNOLOGY | OPTION | YEAR | VALUE     |
 |:---------------------------------------:|:------:|------------|--------|:----:|-----------|
-| TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 0      | 1990 | 999999999 |
-| TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 0      | 1991 | 999999999 |
+| TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 0      | 1990 | -1        |
+| TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 0      | 1991 | -1        |
 | ...                                     | ...    | ...        | ...    | ...  | ...       |
-| TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 0      | 2009 | 999999999 |
-| TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 0      | 2010 | 999999999 |
+| TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 0      | 2009 | -1        |
+| TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 0      | 2010 | -1        |
 | TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 1      | 1990 | 0         |
 | TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 1      | 1991 | 0         |
 | ...                                     | ...    | ...        | ...    | ...  | ...       |
 | TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 1      | 2009 | 0         |
 | TotalAnnualMaxCapacityInvestment        | UTOPIA | IMPHCO1    | 1      | 2010 | 0         |
-| TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 0      | 1990 | 9999999   |
-| TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 0      | 1991 | 9999999   |
+| TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 0      | 1990 | -1        |
+| TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 0      | 1991 | -1        |
 | ...                                     | ...    | ...        | ...    | ...  | ...       |
-| TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 0      | 2009 | 9999999   |
-| TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 0      | 2010 | 9999999   |
+| TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 0      | 2009 | -1        |
+| TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 0      | 2010 | -1        |
 | TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 1      | 1990 | 0         |
 | TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 1      | 1991 | 0         |
 | ...                                     | ...    | ...        | ...    | ...  | ...       |
 | TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 1      | 2009 | 0         |
 | TotalAnnualMaxCapacityInvestment        | UTOPIA | RL1        | 1      | 2010 | 0         |
-| TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 0      | 1990 | 9999999   |
-| TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 0      | 1991 | 9999999   |
+| TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 0      | 1990 | -1        |
+| TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 0      | 1991 | -1        |
 | ...                                     | ...    | ...        | ...    | ...  | ...       |
-| TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 0      | 2009 | 9999999   |
-| TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 0      | 2010 | 9999999   |
+| TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 0      | 2009 | -1        |
+| TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 0      | 2010 | -1        |
 | TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 1      | 1990 | 0         |
 | TotalTechnologyAnnualActivityUpperLimit | UTOPIA | RLu        | 1      | 1991 | 0         |
 | ...                                     | ...    | ...        | ...    | ...  | ...       |
