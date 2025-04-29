@@ -504,15 +504,20 @@ def apply_option_data(original: pd.DataFrame, option: pd.DataFrame) -> pd.DataFr
         pd.DataFrame
             dataframe with option values applied
     """
-    if not (original.columns.to_list()) == (option.columns.to_list()):
+    expected_columns = original.columns.tolist()
+    available_columns = [x for x in option if x in expected_columns]
+    if not all(x in expected_columns for x in available_columns):
         logger.error(f"columns for original are {original.columns} and columns to apply are {option.columns}")
         logger.error("Exiting...")
         sys.exit()
     option = option[list(original)] # align column headers
-    df = pd.concat([original, option])
-    subset = list(df)
-    subset.remove("VALUE") # For dropping duplicates
-    df = df.drop_duplicates(keep="last", subset=subset).reset_index(drop=True)
+    if original.empty:
+        df = option
+    else:
+        df = pd.concat([original, option])
+    sets = list(df)
+    sets.remove("VALUE") # For dropping duplicates
+    df = df.drop_duplicates(keep="last", subset=sets).reset_index(drop=True)
     return df
 
 def get_res_cap_next_steps(step: int, n_steps: int, data_path: str, actual_yrs_in_steps: Dict) -> pd.DataFrame:
